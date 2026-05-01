@@ -1,21 +1,25 @@
 import { useEffect, useState } from "react";
-import { View, Text, Button } from "@tarojs/components";
+import { View, Text, Input, Button } from "@tarojs/components";
 import Taro, { useDidShow } from "@tarojs/taro";
 import { useAppStore } from "../../store";
-import { login, getUser, createUser } from "../../services/user";
+import { getUserByPhone, createUser } from "../../services/user";
 import { getToursByGuide } from "../../services/tour";
 import type { Tour, UserRole } from "../../types";
 import { TOUR_STATUS_MAP } from "../../types";
 import "./index.css";
 
+type AuthTab = "login" | "register";
+
 export default function Index() {
   const { user, setUser } = useAppStore();
   const [tours, setTours] = useState<Tour[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    doLogin();
-  }, []);
+  // Auth form state
+  const [authTab, setAuthTab] = useState<AuthTab>("login");
+  const [phone, setPhone] = useState("");
+  const [name, setName] = useState("");
+  const [role, setRole] = useState<UserRole>("guide");
 
   useEffect(() => {
     if (user?.role === "guide") {
@@ -29,29 +33,54 @@ export default function Index() {
     }
   });
 
-  async function doLogin() {
-    try {
-      const { openId } = await login();
-      const existingUser = await getUser(openId);
-      if (existingUser) {
-        setUser(existingUser);
-      }
-      setLoading(false);
-    } catch {
-      setLoading(false);
+  async function handleLogin() {
+    const trimmedPhone = phone.trim();
+    if (!trimmedPhone) {
+      Taro.showToast({ title: "请输入手机号", icon: "none" });
+      return;
     }
+    setLoading(true);
+    try {
+      const found = await getUserByPhone(trimmedPhone);
+      if (!found) {
+        Taro.showToast({ title: "手机号未注册", icon: "none" });
+        setLoading(false);
+        return;
+      }
+      setUser(found);
+    } catch {
+      Taro.showToast({ title: "登录失败", icon: "none" });
+    }
+    setLoading(false);
   }
 
-  async function handleRegister(role: UserRole) {
+  async function handleRegister() {
+    const trimmedName = name.trim();
+    const trimmedPhone = phone.trim();
+    if (!trimmedName) {
+      Taro.showToast({ title: "请输入姓名", icon: "none" });
+      return;
+    }
+    if (!trimmedPhone) {
+      Taro.showToast({ title: "请输入手机号", icon: "none" });
+      return;
+    }
+    setLoading(true);
     try {
-      const { openId } = await login();
-      const name = role === "guide" ? "导游" : role === "supplier" ? "供货商" : "管理员";
-      await createUser(openId, role, name, "");
-      const newUser = await getUser(openId);
+      const existing = await getUserByPhone(trimmedPhone);
+      if (existing) {
+        Taro.showToast({ title: "该手机号已注册", icon: "none" });
+        setLoading(false);
+        return;
+      }
+      const openId = `phone_${trimmedPhone}`;
+      await createUser(openId, role, trimmedName, trimmedPhone);
+      const newUser = await getUserByPhone(trimmedPhone);
       setUser(newUser);
     } catch {
       Taro.showToast({ title: "注册失败", icon: "none" });
     }
+    setLoading(false);
   }
 
   async function loadTours() {
@@ -63,6 +92,9 @@ export default function Index() {
   function handleLogout() {
     setUser(null);
     setTours([]);
+    setPhone("");
+    setName("");
+    setAuthTab("login");
   }
 
   function handleCreateTour() {
@@ -73,14 +105,6 @@ export default function Index() {
     Taro.navigateTo({ url: `/pages/tour/detail/index?id=${id}` });
   }
 
-  if (loading) {
-    return (
-      <View className="page-center">
-        <Text>加载中...</Text>
-      </View>
-    );
-  }
-
   if (!user) {
     return (
       <View className="page-center">
@@ -88,16 +112,76 @@ export default function Index() {
           <Text className="brand-title">桂礼道</Text>
           <Text className="brand-sub">旅游特产销售管理</Text>
         </View>
-        <View className="role-select">
-          <Text className="role-title">请选择您的身份</Text>
-          <Button className="btn-primary" onClick={() => handleRegister("guide")}>
-            我是导游
-          </Button>
-          <Button className="btn-secondary" onClick={() => handleRegister("supplier")}>
-            我是供货商
-          </Button>
-          <Button className="btn-admin" onClick={() => handleRegister("admin")}>
-            管理后台
+
+        <View className="auth-tabs">
+          <Text
+            className={`auth-tab ${authTab === "login" ? "active" : ""}`}
+            onClick={() => { setAuthTab("login"); setPhone(""); setName(""); }}
+          >
+            登录
+          </Text>
+          <Text
+            className={`auth-tab ${authTab === "register" ? "active" : ""}`}
+            onClick={() => { setAuthTab("register"); setPhone(""); setName(""); }}
+          >
+            注册
+          </Text>
+        </View>
+
+        <View className="auth-form">
+          {authTab === "register" && (
+            <View className="form-group">
+              <Text className="form-label">姓名</Text>
+              <Input
+                className="form-input"
+                placeholder="请输入姓名"
+                value={name}
+                onInput={(e) => setName(e.detail.value)}
+              />
+            </View>
+          )}
+          <View className="form-group">
+            <Text className="form-label">手机号</Text>
+            <Input
+              className="form-input"
+              type="number"
+              placeholder="请输入手机号"
+              maxlength={11}
+              value={phone}
+              onInput={(e) => setPhone(e.detail.value)}
+            />
+          </View>
+          {authTab === "register" && (
+            <View className="form-group">
+              <Text className="form-label">选择角色</Text>
+              <View className="role-chips">
+                <Text
+                  className={`role-chip ${role === "guide" ? "active" : ""}`}
+                  onClick={() => setRole("guide")}
+                >
+                  导游
+                </Text>
+                <Text
+                  className={`role-chip ${role === "supplier" ? "active" : ""}`}
+                  onClick={() => setRole("supplier")}
+                >
+                  供货商
+                </Text>
+                <Text
+                  className={`role-chip ${role === "admin" ? "active" : ""}`}
+                  onClick={() => setRole("admin")}
+                >
+                  管理员
+                </Text>
+              </View>
+            </View>
+          )}
+          <Button
+            className="btn-primary"
+            onClick={authTab === "login" ? handleLogin : handleRegister}
+            disabled={loading}
+          >
+            {loading ? "请稍候..." : authTab === "login" ? "登录" : "注册"}
           </Button>
         </View>
       </View>

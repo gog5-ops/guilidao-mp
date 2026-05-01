@@ -9,7 +9,7 @@
 
 .brand {
   text-align: center;
-  margin-bottom: 80px;
+  margin-bottom: 48px;
 }
 
 .brand-title {
@@ -26,16 +26,77 @@
   color: #999;
 }
 
-.role-select {
+.auth-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 40px;
   width: 100%;
 }
 
-.role-title {
-  display: block;
+.auth-tab {
+  flex: 1;
   text-align: center;
   font-size: 32px;
+  padding: 16px 0;
+  color: #999;
+  border-bottom: 4px solid transparent;
+  transition: all 0.2s;
+}
+
+.auth-tab.active {
+  color: #8B5E3C;
+  font-weight: bold;
+  border-bottom-color: #8B5E3C;
+}
+
+.auth-form {
+  width: 100%;
+}
+
+.form-group {
+  margin-bottom: 28px;
+}
+
+.form-label {
+  display: block;
+  font-size: 28px;
   color: #666;
-  margin-bottom: 40px;
+  margin-bottom: 12px;
+}
+
+.form-input {
+  width: 100%;
+  font-size: 30px;
+  padding: 16px 20px;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.role-chips {
+  display: flex;
+  gap: 16px;
+}
+
+.role-chip {
+  flex: 1;
+  text-align: center;
+  font-size: 28px;
+  padding: 14px 0;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  color: #666;
+  background: #fff;
+  transition: all 0.2s;
+}
+
+.role-chip.active {
+  border-color: #8B5E3C;
+  background: #8B5E3C;
+  color: #fff;
+  font-weight: bold;
 }
 
 .btn-primary {
@@ -45,26 +106,12 @@
   border-radius: 12px;
   font-size: 32px;
   padding: 24px 0;
-  margin-bottom: 24px;
+  margin-top: 12px;
+  width: 100%;
 }
 
-.btn-secondary {
-  background-color: #fff;
-  color: #8B5E3C;
-  border: 2px solid #8B5E3C;
-  border-radius: 12px;
-  font-size: 32px;
-  padding: 24px 0;
-}
-
-.btn-admin {
-  background-color: #f5f0eb;
-  color: #8B5E3C;
-  border: 2px solid #8B5E3C;
-  border-radius: 12px;
-  font-size: 32px;
-  padding: 24px 0;
-  margin-top: 24px;
+.btn-primary[disabled] {
+  opacity: 0.6;
 }
 
 .page {

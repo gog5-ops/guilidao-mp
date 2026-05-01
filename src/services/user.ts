@@ -37,6 +37,14 @@ export async function createUser(
   return _id as string;
 }
 
+export async function getUserByPhone(phone: string): Promise<User | null> {
+  const { data } = await collection(Collections.USERS)
+    .where({ phone })
+    .get();
+  if (data.length === 0) return null;
+  return data[0] as unknown as User;
+}
+
 export async function updateUser(
   id: string,
   data: Partial<Pick<User, "name" | "phone" | "wechatId">>
