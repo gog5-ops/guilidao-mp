@@ -36,4 +36,5 @@ export const Collections = {
   DELIVERY_LOCATIONS: "delivery_locations",
   RED_SLIPS: "red_slips",
   SUPPLIER_ORDERS: "supplier_orders",
+  WHITE_SLIPS: "white_slips",
 } as const;

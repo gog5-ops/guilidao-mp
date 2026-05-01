@@ -2,14 +2,15 @@ import { useEffect, useState } from "react";
 import { View, Text, Button, Input } from "@tarojs/components";
 import Taro, { useRouter } from "@tarojs/taro";
 import { useAppStore } from "../../../store";
-import { getOrder, addOrderNote, getOrderNotes } from "../../../services/order";
+import { addOrderNote, getOrderNotes } from "../../../services/order";
 import {
   getSupplierOrder,
   updateSupplierOrderStatus,
   updateTrackingNumber,
 } from "../../../services/supplier-order";
+import { getWhiteSlip } from "../../../services/white-slip";
 import { getUserById } from "../../../services/user";
-import type { SupplierOrder, Order, OrderNote, User } from "../../../types";
+import type { SupplierOrder, WhiteSlip, GuestEntry, OrderNote, User } from "../../../types";
 import { ORDER_STATUS_MAP, DELIVERY_METHOD_MAP } from "../../../types";
 import "./index.css";
 
@@ -19,7 +20,7 @@ export default function SupplierDetail() {
   const { user } = useAppStore();
 
   const [supplierOrder, setSupplierOrder] = useState<SupplierOrder | null>(null);
-  const [whiteSlips, setWhiteSlips] = useState<Order[]>([]);
+  const [whiteSlip, setWhiteSlip] = useState<WhiteSlip | null>(null);
   const [guide, setGuide] = useState<User | null>(null);
   const [notes, setNotes] = useState<OrderNote[]>([]);
   const [noteText, setNoteText] = useState("");
@@ -36,17 +37,17 @@ export default function SupplierDetail() {
     setSupplierOrder(so);
     if (!so) return;
 
-    // Load all white slips
-    const slips = await Promise.all(
-      so.whiteSlipIds.map((id) => getOrder(id))
-    );
-    setWhiteSlips(slips.filter((s): s is Order => s !== null));
+    // Load white slip (first whiteSlipId is the WhiteSlip document)
+    if (so.whiteSlipIds.length > 0) {
+      const slip = await getWhiteSlip(so.whiteSlipIds[0]);
+      setWhiteSlip(slip);
+    }
 
     // Load guide info
     const guideData = await getUserById(so.guideId);
     setGuide(guideData);
 
-    // Load notes (use supplier order ID)
+    // Load notes
     const notesData = await getOrderNotes(orderId);
     setNotes(notesData);
 
@@ -130,21 +131,12 @@ export default function SupplierDetail() {
     );
   }
 
-  // Group white slips by guest number
-  const guestGroups: Record<string, Order[]> = {};
-  for (const slip of whiteSlips) {
-    const gn = slip.guestNo || "未编号";
-    if (!guestGroups[gn]) guestGroups[gn] = [];
-    guestGroups[gn].push(slip);
-  }
-  const guestKeys = Object.keys(guestGroups).sort();
-
-  const aggQuantity = whiteSlips.reduce(
-    (sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0),
+  const entries: GuestEntry[] = whiteSlip?.entries || [];
+  const aggQuantity = entries.reduce(
+    (sum, e) => sum + e.items.reduce((s, i) => s + i.quantity, 0),
     0
   );
-
-  const hasExpressSlips = whiteSlips.some((s) => s.deliveryMethod === "express");
+  const hasExpressEntries = entries.some((e) => e.deliveryMethod === "express");
 
   return (
     <View className="page">
@@ -167,8 +159,8 @@ export default function SupplierDetail() {
           <Text>{supplierOrder.tourDate}</Text>
         </View>
         <View className="info-row">
-          <Text className="info-label">白单数</Text>
-          <Text>{supplierOrder.whiteSlipIds.length}张</Text>
+          <Text className="info-label">游客数</Text>
+          <Text>{entries.length}人</Text>
         </View>
       </View>
 
@@ -202,28 +194,28 @@ export default function SupplierDetail() {
         </View>
       )}
 
-      {/* White slips grouped by guest */}
+      {/* White slip entries grouped by guest */}
       <View className="card">
         <Text className="card-title">白单明细（按游客分组）</Text>
-        {guestKeys.map((gn) => (
-          <View key={gn} className="guest-group">
-            <Text className="guest-header">游客 {gn}</Text>
-            {guestGroups[gn].map((slip) => (
-              <View key={slip._id} className="slip-block">
-                {slip.items.map((item) => (
-                  <View key={item.productId} className="item-row">
-                    <Text className="item-name">{item.productName}</Text>
-                    <Text className="item-qty">x{item.quantity}套</Text>
-                  </View>
-                ))}
-                <View className="slip-delivery">
-                  <Text className="delivery-label">{DELIVERY_METHOD_MAP[slip.deliveryMethod]}</Text>
-                  {slip.deliveryMethod === "express" && slip.deliveryAddress && (
-                    <Text className="delivery-addr">{slip.deliveryAddress}</Text>
-                  )}
+        {entries.map((entry) => (
+          <View key={entry.guestNo} className="guest-group">
+            <Text className="guest-header">游客 {entry.guestNo}</Text>
+            <View className="slip-block">
+              {entry.items.map((item) => (
+                <View key={item.productId} className="item-row">
+                  <Text className="item-name">{item.productName}</Text>
+                  <Text className="item-qty">x{item.quantity}套</Text>
                 </View>
+              ))}
+              <View className="slip-delivery">
+                <Text className="delivery-label">
+                  {DELIVERY_METHOD_MAP[entry.deliveryMethod]}
+                </Text>
+                {entry.deliveryMethod === "express" && entry.deliveryAddress && (
+                  <Text className="delivery-addr">{entry.deliveryAddress}</Text>
+                )}
               </View>
-            ))}
+            </View>
           </View>
         ))}
         <View className="item-total">
@@ -232,7 +224,7 @@ export default function SupplierDetail() {
       </View>
 
       {/* Tracking number for express orders when confirmed */}
-      {supplierOrder.status === "confirmed" && hasExpressSlips && (
+      {supplierOrder.status === "confirmed" && hasExpressEntries && (
         <View className="card">
           <Text className="card-title">快递单号</Text>
           <Input

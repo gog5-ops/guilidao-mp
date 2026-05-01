@@ -13,6 +13,7 @@ import type {
   DeliveryLocation,
   RedSlip,
   SupplierOrder,
+  WhiteSlip,
 } from "../types";
 
 const GUIDE_ID = "mock_user_guide";
@@ -273,6 +274,70 @@ const MOCK_SUPPLIER_ORDERS: SupplierOrder[] = [
   },
 ];
 
+const MOCK_WHITE_SLIPS: WhiteSlip[] = [
+  {
+    _id: "mock_white_slip_1",
+    tourId: "mock_tour_1",
+    guideId: GUIDE_ID,
+    redSlipId: "mock_red_slip_1",
+    entries: [
+      {
+        guestNo: "001",
+        items: makeOrderItems([0, 1, 2], [1, 1, 1]),
+        deliveryMethod: "delivery",
+        deliveryAddress: "桂林漓江大瀑布饭店",
+        deliveryTime: "2025-04-20T14:00:00.000Z",
+      },
+      {
+        guestNo: "002",
+        items: makeOrderItems([3, 4], [1, 1]),
+        deliveryMethod: "express",
+        deliveryAddress: "广州市天河区天河路385号",
+        remark: "请尽快发货",
+      },
+      {
+        guestNo: "003",
+        items: makeOrderItems([0, 2], [2, 1]),
+        deliveryMethod: "delivery",
+        deliveryAddress: "桂林漓江大瀑布饭店",
+      },
+    ],
+    defaultAddress: "桂林漓江大瀑布饭店",
+    totalAmount: 84000,
+    totalQuantity: 7,
+    status: "submitted",
+    createdAt: "2025-04-19T10:30:00.000Z",
+    updatedAt: "2025-04-19T12:00:00.000Z",
+  },
+  {
+    _id: "mock_white_slip_2",
+    tourId: "mock_tour_2",
+    guideId: GUIDE_ID,
+    redSlipId: "mock_red_slip_2",
+    entries: [
+      {
+        guestNo: "001",
+        items: makeOrderItems([3, 5, 6], [1, 1, 1]),
+        deliveryMethod: "delivery",
+        deliveryAddress: "桂林香格里拉大酒店",
+        deliveryTime: "2025-04-21T12:00:00.000Z",
+      },
+      {
+        guestNo: "002",
+        items: makeOrderItems([5], [2]),
+        deliveryMethod: "delivery",
+        deliveryAddress: "桂林香格里拉大酒店",
+      },
+    ],
+    defaultAddress: "桂林香格里拉大酒店",
+    totalAmount: 60000,
+    totalQuantity: 5,
+    status: "draft",
+    createdAt: "2025-04-20T08:30:00.000Z",
+    updatedAt: "2025-04-20T09:00:00.000Z",
+  },
+];
+
 export function seedMockData(): void {
   // Users
   for (const u of MOCK_USERS) {
@@ -307,5 +372,10 @@ export function seedMockData(): void {
   // Supplier orders
   for (const so of MOCK_SUPPLIER_ORDERS) {
     seedRecord(Collections.SUPPLIER_ORDERS, { ...so });
+  }
+
+  // White slips
+  for (const ws of MOCK_WHITE_SLIPS) {
+    seedRecord(Collections.WHITE_SLIPS, { ...ws });
   }
 }

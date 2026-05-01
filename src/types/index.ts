@@ -130,6 +130,34 @@ export interface DeliveryLocation {
   usageCount: number;
 }
 
+export interface GuestEntry {
+  guestNo: string;
+  items: OrderItem[];
+  deliveryMethod: DeliveryMethod;
+  deliveryAddress?: string;
+  deliveryTime?: string;
+  remark?: string;
+}
+
+export interface WhiteSlip {
+  _id: string;
+  tourId: string;
+  guideId: string;
+  redSlipId?: string;
+  entries: GuestEntry[];
+  defaultAddress: string;
+  totalAmount: number;
+  totalQuantity: number;
+  status: 'draft' | 'submitted';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const WHITE_SLIP_STATUS_MAP: Record<WhiteSlip['status'], string> = {
+  draft: '草稿',
+  submitted: '已提交',
+};
+
 export const ORDER_STATUS_MAP: Record<OrderStatus, string> = {
   pending: "待确认",
   confirmed: "已确认",

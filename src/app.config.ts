@@ -15,6 +15,7 @@ export default defineAppConfig({
     "pages/product/index",
     "pages/profile/index",
     "pages/red-slip/index",
+    "pages/white-slip/edit/index",
   ],
   window: {
     backgroundTextStyle: "light",
