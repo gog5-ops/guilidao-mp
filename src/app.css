@@ -4,3 +4,86 @@ page {
   color: #333333;
   background-color: #f5f5f5;
 }
+
+/* Global back bar */
+.back-bar { padding: 16px 0; margin-bottom: 12px; }
+.back-arrow { font-size: 28px; color: #8B5E3C; }
+
+/* Global button base */
+.btn-primary, .btn-create, .btn-save, .btn-submit, .btn-next, .btn-manage, .btn-history, .btn-add {
+  display: block;
+  width: 100%;
+  background-color: #8B5E3C;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 30px;
+  padding: 20px 0;
+  text-align: center;
+  box-sizing: border-box;
+  line-height: 1.5;
+}
+
+.btn-outline, .btn-secondary, .btn-back, .btn-history {
+  display: block;
+  width: 100%;
+  background-color: #fff;
+  color: #8B5E3C;
+  border: 2px solid #8B5E3C;
+  border-radius: 12px;
+  font-size: 30px;
+  padding: 18px 0;
+  text-align: center;
+  box-sizing: border-box;
+  line-height: 1.5;
+}
+
+.btn-logout {
+  font-size: 26px;
+  color: #999;
+  padding: 8px 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.btn-accept {
+  flex: 1;
+  background: #2E7D32;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 30px;
+  padding: 20px 0;
+}
+
+.btn-reject {
+  flex: 1;
+  background: #fff;
+  color: #C62828;
+  border: 2px solid #C62828;
+  border-radius: 12px;
+  font-size: 30px;
+  padding: 18px 0;
+}
+
+.btn-ship {
+  background: #1565C0;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 30px;
+  padding: 20px 0;
+  margin-bottom: 16px;
+}
+
+.btn-send {
+  width: 100%;
+  background: #8B5E3C;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 26px;
+  padding: 16px 0;
+}
+
+[disabled] { opacity: 0.5; }

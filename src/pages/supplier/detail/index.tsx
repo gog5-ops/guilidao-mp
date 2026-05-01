@@ -175,6 +175,9 @@ export default function SupplierDetail() {
 
   return (
     <View className="page">
+      <View className="back-bar" onClick={() => Taro.navigateBack()}>
+        <Text className="back-arrow">&larr; 返回</Text>
+      </View>
       <View className="status-banner">
         <Text className={`status-text status-${supplierOrder.status}`}>
           {ORDER_STATUS_MAP[supplierOrder.status]}
