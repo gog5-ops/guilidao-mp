@@ -237,6 +237,9 @@ export default function ProductManagePage() {
 
   return (
     <View className="page">
+      <View className="back-bar" onClick={() => Taro.navigateBack()}>
+        <Text className="back-arrow">&larr; 返回</Text>
+      </View>
       <View className="page-header">
         <Text className="page-title">商品管理</Text>
         <Text className="btn-add" onClick={openAdd}>

@@ -4,6 +4,9 @@
   background: #f5f5f5;
 }
 
+.back-bar { padding: 16px 0; margin-bottom: 12px; }
+.back-arrow { font-size: 28px; color: #8B5E3C; }
+
 .page-header {
   display: flex;
   justify-content: space-between;

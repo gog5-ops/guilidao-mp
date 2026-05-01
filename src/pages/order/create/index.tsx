@@ -286,6 +286,9 @@ export default function OrderCreate() {
   if (step === "products") {
     return (
       <View className="page">
+        <View className="back-bar" onClick={() => Taro.navigateBack()}>
+          <Text className="back-arrow">&larr; 返回</Text>
+        </View>
         <Text className="page-title">选择商品和数量</Text>
 
         <View className="form-group" style={{ marginBottom: "20px" }}>
@@ -385,6 +388,9 @@ export default function OrderCreate() {
   if (step === "delivery") {
     return (
       <View className="page">
+        <View className="back-bar" onClick={() => Taro.navigateBack()}>
+          <Text className="back-arrow">&larr; 返回</Text>
+        </View>
         <Text className="page-title">选择送货方式</Text>
         <View className="delivery-options">
           {deliveryMethods.map((m) => (
@@ -489,6 +495,9 @@ export default function OrderCreate() {
   const items = buildItems();
   return (
     <View className="page">
+      <View className="back-bar" onClick={() => Taro.navigateBack()}>
+        <Text className="back-arrow">&larr; 返回</Text>
+      </View>
       <Text className="page-title">确认订单</Text>
 
       <View className="confirm-section">

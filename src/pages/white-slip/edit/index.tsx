@@ -408,6 +408,9 @@ export default function WhiteSlipEdit() {
 
   return (
     <View className="page">
+      <View className="back-bar" onClick={() => Taro.navigateBack()}>
+        <Text className="back-arrow">&larr; 返回</Text>
+      </View>
       <Text className="page-title">白单编辑</Text>
 
       {redSlipName && (

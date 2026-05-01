@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, Text, ScrollView } from "@tarojs/components";
-import { useRouter } from "@tarojs/taro";
+import Taro, { useRouter } from "@tarojs/taro";
 import { getTour } from "../../../services/tour";
 import { getWhiteSlipByTour } from "../../../services/white-slip";
 import type { Tour, WhiteSlip, GuestEntry } from "../../../types";
@@ -74,6 +74,9 @@ export default function OrderSummary() {
 
   return (
     <View className="page">
+      <View className="back-bar" onClick={() => Taro.navigateBack()}>
+        <Text className="back-arrow">&larr; 返回</Text>
+      </View>
       <View className="summary-header">
         <Text className="summary-brand">桂礼道 -- 汇总单</Text>
         <Text className="summary-info">

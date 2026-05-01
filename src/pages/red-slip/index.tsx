@@ -124,6 +124,9 @@ export default function RedSlipPage() {
 
   return (
     <View className="page">
+      <View className="back-bar" onClick={() => Taro.navigateBack()}>
+        <Text className="back-arrow">&larr; 返回</Text>
+      </View>
       <Text className="page-title">红单管理</Text>
 
       <Text className="btn-create" onClick={openCreate}>+ 创建红单</Text>

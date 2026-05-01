@@ -49,6 +49,9 @@ export default function DeliveryEdit() {
 
   return (
     <View className="page">
+      <View className="back-bar" onClick={() => Taro.navigateBack()}>
+        <Text className="back-arrow">&larr; 返回</Text>
+      </View>
       <View className="delivery-options">
         {methods.map((m) => (
           <View

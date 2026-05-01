@@ -58,6 +58,9 @@ export default function TourCreate() {
 
   return (
     <View className="page">
+      <View className="back-bar" onClick={() => Taro.navigateBack()}>
+        <Text className="back-arrow">&larr; 返回</Text>
+      </View>
       <View className="form-group">
         <Text className="label">团号</Text>
         <Input

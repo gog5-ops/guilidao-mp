@@ -55,6 +55,9 @@ export default function Profile() {
 
   return (
     <View className="page">
+      <View className="back-bar" onClick={() => Taro.navigateBack()}>
+        <Text className="back-arrow">&larr; 返回</Text>
+      </View>
       <View className="avatar-section">
         <View className="avatar">{name.slice(0, 1) || "?"}</View>
         <Text className="role-badge">{ROLE_LABEL[user.role] || user.role}</Text>

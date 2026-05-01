@@ -1,4 +1,6 @@
 .page { padding: 24px; min-height: 100vh; }
+.back-bar { padding: 16px 0; margin-bottom: 12px; }
+.back-arrow { font-size: 28px; color: #8B5E3C; }
 .page-center { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
 
 .summary-header { background: #8B5E3C; color: #fff; border-radius: 12px; padding: 24px; margin-bottom: 24px; text-align: center; }

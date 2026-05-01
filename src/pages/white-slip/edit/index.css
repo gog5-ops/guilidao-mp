@@ -1,4 +1,6 @@
 .page { padding: 24px; padding-bottom: 160px; min-height: 100vh; }
+.back-bar { padding: 16px 0; margin-bottom: 12px; }
+.back-arrow { font-size: 28px; color: #8B5E3C; }
 .page-center { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
 .page-title { display: block; font-size: 34px; font-weight: bold; color: #333; margin-bottom: 24px; }
 .red-slip-hint { display: block; font-size: 24px; color: #8B5E3C; margin-bottom: 16px; padding: 8px 16px; background: #FFF8F0; border-radius: 6px; }

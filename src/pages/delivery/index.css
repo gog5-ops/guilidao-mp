@@ -1,4 +1,6 @@
 .page { padding: 32px; min-height: 100vh; }
+.back-bar { padding: 16px 0; margin-bottom: 12px; }
+.back-arrow { font-size: 28px; color: #8B5E3C; }
 
 .delivery-options { display: flex; gap: 12px; margin-bottom: 32px; }
 .option { flex: 1; text-align: center; padding: 20px 0; background: #fff; border: 2px solid #eee; border-radius: 8px; font-size: 26px; color: #666; }

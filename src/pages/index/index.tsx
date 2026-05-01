@@ -205,9 +205,14 @@ export default function Index() {
           <Text className="welcome" onClick={() => Taro.navigateTo({ url: "/pages/profile/index" })}>你好，{user.name} &gt;</Text>
           <Text className="btn-logout" onClick={handleLogout}>退出</Text>
         </View>
-        <Button className="btn-create" onClick={handleCreateTour}>
-          + 创建团次
-        </Button>
+        <View className="header-buttons">
+          <Button className="btn-create" onClick={handleCreateTour}>
+            + 创建团次
+          </Button>
+          <Button className="btn-history" onClick={() => Taro.navigateTo({ url: "/pages/history/index" })}>
+            订单历史
+          </Button>
+        </View>
       </View>
 
       <View className="section">

@@ -144,10 +144,27 @@
   color: #333;
 }
 
+.header-buttons {
+  display: flex;
+  gap: 12px;
+}
+
 .btn-create {
+  flex: 1;
   background-color: #8B5E3C;
   color: #fff;
   border: none;
+  border-radius: 8px;
+  font-size: 28px;
+  padding: 12px 24px;
+  line-height: 1.5;
+}
+
+.btn-history {
+  flex: 1;
+  background-color: #fff;
+  color: #8B5E3C;
+  border: 2px solid #8B5E3C;
   border-radius: 8px;
   font-size: 28px;
   padding: 12px 24px;
