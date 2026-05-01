@@ -6,7 +6,6 @@
 Product ──< OrderItem >── Order ──< OrderNote
                             │
                             ├── Tour
-                            ├── Guest
                             └── DeliveryInfo ── DeliveryLocation
 ```
 
@@ -36,28 +35,17 @@ Product ──< OrderItem >── Order ──< OrderNote
 | tourCode | string | 团号 |
 | date | date | 出团日期 |
 | guideId | string | 导游 ID |
-| guestCount | number | 游客人数 |
+| orderCount | number | 订单数 |
 | status | enum | draft / submitted / completed |
 | createdAt | datetime | 创建时间 |
-
-### Guest (游客)
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | string | 主键 |
-| tourId | string | 所属团次 |
-| seqNo | number | 序号（对应白单序号） |
-| name | string | 姓名 |
-| phone | string | 联系电话（可选） |
 
 ### Order (订单)
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | id | string | 主键 |
-| orderNo | string | 订单编号 |
+| orderNo | string | 订单编号（白单编号） |
 | tourId | string | 团次 ID |
-| guestId | string | 游客 ID |
 | guideId | string | 下单导游 |
 | supplierId | string | 供货商 ID |
 | status | enum | pending / confirmed / shipping / delivered |
@@ -120,5 +108,4 @@ Product ──< OrderItem >── Order ──< OrderNote
 
 - Order: `tourId`, `guideId`, `supplierId`, `status`, `createdAt`
 - OrderItem: `orderId`, `productId`
-- Guest: `tourId`
 - DeliveryLocation: `type`, `usageCount`
