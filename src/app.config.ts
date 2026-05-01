@@ -10,6 +10,7 @@ export default defineAppConfig({
     "pages/supplier/detail/index",
     "pages/delivery/index",
     "pages/notes/index",
+    "pages/stats/index",
   ],
   window: {
     backgroundTextStyle: "light",
@@ -30,6 +31,10 @@ export default defineAppConfig({
       {
         pagePath: "pages/supplier/orders/index",
         text: "订单",
+      },
+      {
+        pagePath: "pages/stats/index",
+        text: "统计",
       },
     ],
   },

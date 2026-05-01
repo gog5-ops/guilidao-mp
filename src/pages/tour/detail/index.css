@@ -27,3 +27,7 @@
 .amount { font-size: 28px; font-weight: bold; color: #8B5E3C; }
 
 .empty { text-align: center; padding: 60px 0; color: #ccc; font-size: 28px; }
+
+.submit-section { margin-bottom: 24px; }
+.btn-submit { width: 100%; background: #D84315; color: #fff; border: none; border-radius: 8px; font-size: 30px; padding: 24px 0; font-weight: bold; }
+.btn-submit[disabled] { opacity: 0.5; }
