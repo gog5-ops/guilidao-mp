@@ -357,6 +357,20 @@ export default function WhiteSlipEdit() {
 
   async function handleSave() {
     if (!user) return;
+
+    // Validate: each guest must have at least one product with qty > 0
+    for (const guest of guests) {
+      const itemCount = guestItemCount(guest);
+      if (itemCount <= 0) {
+        Taro.showToast({
+          title: `游客 ${guest.guestNo} 没有选择商品`,
+          icon: "none",
+          duration: 3000,
+        });
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       const entries = guests.map((g) => stateToGuestEntry(g, displayProducts));

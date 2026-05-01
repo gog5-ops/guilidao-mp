@@ -1,22 +1,27 @@
 import { useState } from "react";
-import { View, Text, Button } from "@tarojs/components";
+import { View, Text, Button, Input } from "@tarojs/components";
 import Taro, { useRouter, useDidShow } from "@tarojs/taro";
+import { useAppStore } from "../../../store";
 import { getTour, updateTourStatus } from "../../../services/tour";
 import { getWhiteSlipByTour, submitWhiteSlip, updateWhiteSlip } from "../../../services/white-slip";
 import { createSupplierOrder, getSupplierOrderByTour, deleteSupplierOrder } from "../../../services/supplier-order";
 import { getUserById } from "../../../services/user";
-import type { Tour, WhiteSlip, SupplierOrder } from "../../../types";
+import { addOrderNote, getOrderNotes } from "../../../services/order";
+import type { Tour, WhiteSlip, SupplierOrder, OrderNote } from "../../../types";
 import { DELIVERY_METHOD_MAP, ORDER_STATUS_MAP } from "../../../types";
 import "./index.css";
 
 export default function TourDetail() {
   const router = useRouter();
   const tourId = router.params.id || "";
+  const { user } = useAppStore();
   const [tour, setTour] = useState<Tour | null>(null);
   const [whiteSlip, setWhiteSlip] = useState<WhiteSlip | null>(null);
   const [supplierOrder, setSupplierOrder] = useState<SupplierOrder | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [notes, setNotes] = useState<OrderNote[]>([]);
+  const [noteText, setNoteText] = useState("");
 
   useDidShow(() => {
     loadData();
@@ -31,6 +36,27 @@ export default function TourDetail() {
     setTour(tourData);
     setWhiteSlip(slipData);
     setSupplierOrder(soData);
+
+    // Load notes if supplier order exists
+    if (soData) {
+      const notesData = await getOrderNotes(soData._id);
+      setNotes(notesData);
+    }
+  }
+
+  async function handleSendNote() {
+    if (!noteText.trim() || !user || !supplierOrder) return;
+    await addOrderNote({
+      orderId: supplierOrder._id,
+      userId: user._id,
+      role: "guide",
+      userName: user.name,
+      content: noteText.trim(),
+      createdAt: new Date().toISOString(),
+    });
+    setNoteText("");
+    const updated = await getOrderNotes(supplierOrder._id);
+    setNotes(updated);
   }
 
   function handleEditWhiteSlip() {
@@ -49,6 +75,19 @@ export default function TourDetail() {
     if (!tour || !whiteSlip || whiteSlip.entries.length === 0) return;
     if (tour.status !== "draft") {
       Taro.showToast({ title: "该团次已提交", icon: "none" });
+      return;
+    }
+    // Validate: each guest must have at least one product with qty > 0
+    const emptyGuests = whiteSlip.entries.filter(
+      (e) => e.items.length === 0 || e.items.every((i) => i.quantity <= 0)
+    );
+    if (emptyGuests.length > 0) {
+      const nos = emptyGuests.map((e) => e.guestNo).join(", ");
+      Taro.showToast({
+        title: `游客 ${nos} 没有选择商品`,
+        icon: "none",
+        duration: 3000,
+      });
       return;
     }
     // Validate: guests with express delivery must have address
@@ -175,6 +214,21 @@ export default function TourDetail() {
           >
             共 {whiteSlip.entries.length} 位游客，请确认以下订单信息：
           </Text>
+          {whiteSlip.defaultAddress && (
+            <View
+              style={{
+                padding: "8px 12px",
+                marginBottom: "12px",
+                background: "#FFF8F0",
+                borderRadius: "6px",
+                fontSize: "13px",
+                color: "#8B5E3C",
+              }}
+            >
+              <Text style={{ fontWeight: "bold" }}>默认送货地址：</Text>
+              <Text>{whiteSlip.defaultAddress}</Text>
+            </View>
+          )}
           {whiteSlip.entries.map((entry) => {
             const entryTotal = entry.items.reduce(
               (s, i) => s + i.subtotal,
@@ -214,6 +268,32 @@ export default function TourDetail() {
                     .map((i) => `${i.productName}x${i.quantity}`)
                     .join("  ")}
                 </Text>
+                <View
+                  style={{
+                    display: "flex",
+                    gap: "8px",
+                    alignItems: "center",
+                    marginTop: "4px",
+                    fontSize: "12px",
+                  }}
+                >
+                  <Text
+                    style={{
+                      background: entry.deliveryMethod === "express" ? "#E3F2FD" : "#E8F5E9",
+                      color: entry.deliveryMethod === "express" ? "#1565C0" : "#2E7D32",
+                      padding: "2px 8px",
+                      borderRadius: "4px",
+                      fontSize: "12px",
+                    }}
+                  >
+                    {DELIVERY_METHOD_MAP[entry.deliveryMethod]}
+                  </Text>
+                  {entry.deliveryMethod === "express" && entry.deliveryAddress && (
+                    <Text style={{ fontSize: "12px", color: "#666" }}>
+                      {entry.deliveryAddress}
+                    </Text>
+                  )}
+                </View>
               </View>
             );
           })}
@@ -370,6 +450,78 @@ export default function TourDetail() {
           </>
         )}
       </View>
+
+      {/* Notes / chat section */}
+      {supplierOrder && (
+        <View className="card" style={{ marginTop: "16px" }}>
+          <Text className="card-title">留言 ({notes.length})</Text>
+          {notes.map((note) => (
+            <View
+              key={note._id}
+              style={{
+                padding: "12px 0",
+                borderBottom: "1px solid #f5f5f5",
+              }}
+            >
+              <View
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "6px",
+                }}
+              >
+                <Text style={{ fontSize: "24px", fontWeight: "bold", color: "#333" }}>
+                  {note.userName}
+                </Text>
+                <Text style={{ fontSize: "22px", color: "#ccc" }}>
+                  {new Date(note.createdAt).toLocaleString("zh-CN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </Text>
+              </View>
+              <Text style={{ fontSize: "28px", color: "#666" }}>
+                {note.content}
+              </Text>
+            </View>
+          ))}
+          <View style={{ marginTop: "16px" }}>
+            <Input
+              style={{
+                display: "block",
+                width: "100%",
+                padding: "16px",
+                background: "#f5f5f5",
+                borderRadius: "8px",
+                fontSize: "26px",
+                border: "1px solid #ddd",
+                boxSizing: "border-box",
+                minHeight: "44px",
+                marginBottom: "12px",
+              }}
+              value={noteText}
+              onInput={(e) => setNoteText(e.detail.value)}
+              placeholder="输入留言..."
+              confirmType="send"
+              onConfirm={handleSendNote}
+            />
+            <Button
+              style={{
+                width: "100%",
+                background: "#8B5E3C",
+                color: "#fff",
+                border: "none",
+                borderRadius: "8px",
+                fontSize: "26px",
+                padding: "16px 0",
+              }}
+              onClick={handleSendNote}
+            >
+              发送
+            </Button>
+          </View>
+        </View>
+      )}
     </View>
   );
 }

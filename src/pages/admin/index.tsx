@@ -476,7 +476,18 @@ export default function AdminPage() {
             );
             const afterSales = relatedSO?.afterSalesStatus || "none";
             return (
-              <View key={order._id} className="order-card">
+              <View
+                key={order._id}
+                className="order-card"
+                onClick={() => {
+                  if (relatedSO) {
+                    Taro.navigateTo({
+                      url: `/pages/supplier/detail/index?id=${relatedSO._id}`,
+                    });
+                  }
+                }}
+                style={{ cursor: relatedSO ? "pointer" : "default" }}
+              >
                 <View className="order-header">
                   <Text className="order-no">#{order.orderNo}</Text>
                   <Text className={`order-status status-${order.status}`}>
@@ -494,6 +505,11 @@ export default function AdminPage() {
                     ¥{(order.totalAmount / 100).toFixed(0)}
                   </Text>
                 </View>
+                {relatedSO && (
+                  <Text style={{ fontSize: "22px", color: "#8B5E3C", marginTop: "8px", display: "block" }}>
+                    点击查看详情 &gt;
+                  </Text>
+                )}
 
                 {/* After-sales status display */}
                 {afterSales !== "none" && (

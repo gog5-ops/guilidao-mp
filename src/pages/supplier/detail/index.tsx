@@ -136,7 +136,7 @@ export default function SupplierDetail() {
     await addOrderNote({
       orderId,
       userId: user._id,
-      role: "supplier",
+      role: user.role,
       userName: user.name,
       content: noteText.trim(),
       createdAt: new Date().toISOString(),
@@ -160,6 +160,7 @@ export default function SupplierDetail() {
     0
   );
   const hasExpressEntries = entries.some((e) => e.deliveryMethod === "express");
+  const isAdmin = user?.role === "admin";
 
   return (
     <View className="page">
@@ -217,6 +218,14 @@ export default function SupplierDetail() {
         </View>
       )}
 
+      {/* Default delivery address */}
+      {whiteSlip?.defaultAddress && (
+        <View className="card">
+          <Text className="card-title">默认送货地址</Text>
+          <Text style={{ fontSize: "28px", color: "#333" }}>{whiteSlip.defaultAddress}</Text>
+        </View>
+      )}
+
       {/* White slip entries grouped by guest */}
       <View className="card">
         <Text className="card-title">白单明细（按游客分组）</Text>
@@ -238,6 +247,11 @@ export default function SupplierDetail() {
                   <Text className="delivery-addr">{entry.deliveryAddress}</Text>
                 )}
               </View>
+              {entry.remark && (
+                <View style={{ marginTop: "8px" }}>
+                  <Text style={{ fontSize: "24px", color: "#999" }}>备注：{entry.remark}</Text>
+                </View>
+              )}
             </View>
           </View>
         ))}
@@ -246,8 +260,25 @@ export default function SupplierDetail() {
         </View>
       </View>
 
+      {/* Overall order status info */}
+      <View className="card">
+        <Text className="card-title">订单状态</Text>
+        <View className="info-row">
+          <Text className="info-label">状态</Text>
+          <Text className={`status-${supplierOrder.status}`}>
+            {ORDER_STATUS_MAP[supplierOrder.status]}
+          </Text>
+        </View>
+        {supplierOrder.trackingNumber && (
+          <View className="info-row">
+            <Text className="info-label">快递单号</Text>
+            <Text>{supplierOrder.trackingNumber}</Text>
+          </View>
+        )}
+      </View>
+
       {/* Tracking number for express orders when confirmed */}
-      {supplierOrder.status === "confirmed" && hasExpressEntries && (
+      {!isAdmin && supplierOrder.status === "confirmed" && hasExpressEntries && (
         <View className="card">
           <Text className="card-title">快递单号</Text>
           <Input
@@ -263,7 +294,7 @@ export default function SupplierDetail() {
       )}
 
       {/* Action buttons */}
-      {supplierOrder.status === "pending" && (
+      {!isAdmin && supplierOrder.status === "pending" && (
         <View className="action-group">
           <Button className="btn-accept" onClick={handleAccept}>
             接单
@@ -274,7 +305,7 @@ export default function SupplierDetail() {
         </View>
       )}
 
-      {showReject && (
+      {!isAdmin && showReject && (
         <View className="card">
           <Text className="card-title">拒单原因</Text>
           <Input
@@ -289,7 +320,7 @@ export default function SupplierDetail() {
         </View>
       )}
 
-      {supplierOrder.status === "confirmed" && (
+      {!isAdmin && supplierOrder.status === "confirmed" && (
         <View style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
           <Button className="btn-ship" style={{ flex: 1, marginBottom: 0 }} onClick={handleShip}>
             标记全部发货
@@ -314,14 +345,14 @@ export default function SupplierDetail() {
       )}
 
       {/* Partial shipped: allow marking full shipment */}
-      {supplierOrder.status === "partially_shipped" && (
+      {!isAdmin && supplierOrder.status === "partially_shipped" && (
         <Button className="btn-ship" onClick={handleShip}>
           标记全部发货
         </Button>
       )}
 
       {/* After-sales button: visible when delivered */}
-      {supplierOrder.status === "delivered" && (
+      {!isAdmin && supplierOrder.status === "delivered" && (
         <View className="card">
           <Text className="card-title">售后服务</Text>
           {(!supplierOrder.afterSalesStatus || supplierOrder.afterSalesStatus === "none") ? (
