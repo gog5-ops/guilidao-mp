@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, Input, Textarea } from "@tarojs/components";
+import { View, Text, Input } from "@tarojs/components";
 import Taro from "@tarojs/taro";
 import {
   getAllProducts,
@@ -212,8 +212,8 @@ export default function ProductManagePage() {
 
         <View className="form-group">
           <Text className="form-label">描述</Text>
-          <Textarea
-            className="form-textarea"
+          <Input
+            className="form-input"
             value={form.description}
             onInput={(e) => handleField("description", e.detail.value)}
             placeholder="商品描述..."
