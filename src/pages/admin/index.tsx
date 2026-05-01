@@ -314,6 +314,7 @@ export default function AdminPage() {
         <View className="header-actions">
           <Text className="btn-manage" onClick={() => Taro.navigateTo({ url: "/pages/product/index" })}>商品管理</Text>
           <Text className="btn-manage" onClick={() => Taro.navigateTo({ url: "/pages/red-slip/index" })}>红单管理</Text>
+          <Text className="btn-manage" onClick={() => Taro.navigateTo({ url: "/pages/admin/orders/index" })}>订单管理</Text>
           <Text className="btn-logout" onClick={handleLogout}>退出</Text>
         </View>
       </View>
