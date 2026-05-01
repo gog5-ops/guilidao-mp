@@ -32,6 +32,11 @@ export default defineConfig({
   h5: {
     publicPath: "/",
     staticDirectory: "static",
+    esnextModules: ["@tarojs/components"],
+    devServer: {
+      port: 8090,
+      host: "0.0.0.0",
+    },
     postcss: {
       autoprefixer: { enable: true, config: {} },
       cssModules: {
