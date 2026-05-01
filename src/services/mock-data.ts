@@ -11,6 +11,7 @@ import type {
   Order,
   OrderItem,
   DeliveryLocation,
+  RedSlip,
 } from "../types";
 
 const GUIDE_ID = "mock_user_guide";
@@ -45,6 +46,7 @@ const MOCK_TOURS: Tour[] = [
     guideId: GUIDE_ID,
     orderCount: 2,
     status: "submitted",
+    redSlipId: "mock_red_slip_1",
     createdAt: "2025-04-19T10:00:00.000Z",
   },
   {
@@ -54,6 +56,7 @@ const MOCK_TOURS: Tour[] = [
     guideId: GUIDE_ID,
     orderCount: 2,
     status: "draft",
+    redSlipId: "mock_red_slip_2",
     createdAt: "2025-04-20T08:00:00.000Z",
   },
   {
@@ -162,6 +165,34 @@ const MOCK_ORDERS: Order[] = [
   },
 ];
 
+const MOCK_RED_SLIPS: RedSlip[] = [
+  {
+    _id: "mock_red_slip_1",
+    name: "桂林经典套餐",
+    items: [
+      { productId: "mock_product_1", productName: "罗汉果", price: 12000, unit: "4盒/套", spec: "38克/盒" },
+      { productId: "mock_product_2", productName: "桂圆肉", price: 12000, unit: "3瓶/套", spec: "136克/瓶" },
+      { productId: "mock_product_3", productName: "海苔卷", price: 12000, unit: "4盒/套", spec: "140克/盒" },
+      { productId: "mock_product_5", productName: "桂花糕", price: 12000, unit: "4盒/套", spec: "160克/盒" },
+    ],
+    isActive: true,
+    createdBy: "admin",
+    createdAt: "2025-04-10T08:00:00.000Z",
+  },
+  {
+    _id: "mock_red_slip_2",
+    name: "特产精选套餐",
+    items: [
+      { productId: "mock_product_4", productName: "金桂酥", price: 12000, unit: "4盒/套", spec: "165克/盒" },
+      { productId: "mock_product_6", productName: "漓江醉鱼", price: 12000, unit: "4袋/套", spec: "150克/袋" },
+      { productId: "mock_product_7", productName: "觅山鸡", price: 12000, unit: "4袋/套", spec: "128克/袋" },
+    ],
+    isActive: true,
+    createdBy: "admin",
+    createdAt: "2025-04-12T08:00:00.000Z",
+  },
+];
+
 const MOCK_DELIVERY_LOCATIONS: DeliveryLocation[] = [
   {
     _id: "mock_loc_1",
@@ -225,5 +256,10 @@ export function seedMockData(): void {
   // Delivery locations
   for (const loc of MOCK_DELIVERY_LOCATIONS) {
     seedRecord(Collections.DELIVERY_LOCATIONS, { ...loc });
+  }
+
+  // Red slips
+  for (const rs of MOCK_RED_SLIPS) {
+    seedRecord(Collections.RED_SLIPS, { ...rs });
   }
 }

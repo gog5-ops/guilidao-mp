@@ -85,6 +85,8 @@ export default function TourDetail() {
     );
   }
 
+  const tourTotal = orders.reduce((s, o) => s + o.totalAmount, 0);
+
   return (
     <View className="page">
       <View className="tour-header">
@@ -136,17 +138,23 @@ export default function TourDetail() {
               </View>
               <View className="order-info">
                 <Text className="order-items">
-                  {order.items.map((i) => `${i.productName}×${i.quantity}`).join("  ")}
+                  {order.items.map((i) => `${i.productName}x${i.quantity}`).join("  ")}
                 </Text>
               </View>
               <View className="order-footer">
                 <Text className="delivery">
                   {DELIVERY_METHOD_MAP[order.deliveryMethod]}
                 </Text>
-                <Text className="amount">{order.items.reduce((s, i) => s + i.quantity, 0)}套</Text>
+                <Text className="amount">¥{(order.totalAmount / 100).toFixed(0)}</Text>
               </View>
             </View>
           ))
+        )}
+        {orders.length > 0 && (
+          <View className="tour-total">
+            <Text>团次总金额：</Text>
+            <Text className="tour-total-amount">¥{(tourTotal / 100).toFixed(0)}</Text>
+          </View>
         )}
       </View>
     </View>

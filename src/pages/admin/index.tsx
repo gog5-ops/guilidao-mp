@@ -5,7 +5,7 @@ import { useAppStore } from "../../store";
 import { getAllOrders } from "../../services/order";
 import { getAllTours } from "../../services/tour";
 import type { Order, OrderStatus, Tour } from "../../types";
-import { ORDER_STATUS_MAP } from "../../types";
+import { ORDER_STATUS_MAP, DELIVERY_METHOD_MAP } from "../../types";
 import "./index.css";
 
 type StatusFilter = "all" | OrderStatus;
@@ -46,6 +46,13 @@ function getDateRange(filter: DateFilter): { start: Date; end: Date } | null {
       break;
   }
   return { start, end };
+}
+
+function escapeCsvField(value: string): string {
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
 }
 
 interface ProductRank {
@@ -112,12 +119,53 @@ export default function AdminPage() {
     .sort((a, b) => b.quantity - a.quantity)
     .slice(0, 5);
 
+  function handleExportCSV() {
+    if (filteredOrders.length === 0) {
+      Taro.showToast({ title: "无数据可导出", icon: "none" });
+      return;
+    }
+
+    const header = "订单号,导游ID,商品明细,数量,金额(元),状态,配送方式,地址,日期";
+    const rows = filteredOrders.map((order) => {
+      const itemsStr = order.items
+        .map((i) => `${i.productName}x${i.quantity}`)
+        .join(", ");
+      const totalQty = order.items.reduce((s, i) => s + i.quantity, 0);
+      const cols = [
+        order.orderNo,
+        order.guideId,
+        escapeCsvField(itemsStr),
+        String(totalQty),
+        (order.totalAmount / 100).toFixed(2),
+        ORDER_STATUS_MAP[order.status],
+        DELIVERY_METHOD_MAP[order.deliveryMethod],
+        escapeCsvField(order.deliveryAddress || ""),
+        new Date(order.createdAt).toLocaleDateString("zh-CN"),
+      ];
+      return cols.join(",");
+    });
+
+    const csvContent = "﻿" + header + "\n" + rows.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `订单导出_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    Taro.showToast({ title: "导出成功", icon: "success" });
+  }
+
   return (
     <View className="page">
       <View className="header-top">
         <Text className="welcome" onClick={() => Taro.navigateTo({ url: "/pages/profile/index" })}>你好，{user?.name || "管理员"} &gt;</Text>
         <View className="header-actions">
           <Text className="btn-manage" onClick={() => Taro.navigateTo({ url: "/pages/product/index" })}>商品管理</Text>
+          <Text className="btn-manage" onClick={() => Taro.navigateTo({ url: "/pages/red-slip/index" })}>红单管理</Text>
           <Text className="btn-logout" onClick={handleLogout}>退出</Text>
         </View>
       </View>
@@ -189,6 +237,9 @@ export default function AdminPage() {
             ))}
           </View>
         </View>
+
+        {/* Export CSV button */}
+        <Text className="btn-export" onClick={handleExportCSV}>导出 CSV</Text>
 
         {/* Order list */}
         {filteredOrders.length === 0 ? (

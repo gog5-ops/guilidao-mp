@@ -1,25 +1,36 @@
 import { useEffect, useState } from "react";
-import { View, Text, Button, Picker, Input } from "@tarojs/components";
+import { View, Text, Button, Input } from "@tarojs/components";
 import Taro, { useRouter } from "@tarojs/taro";
 import { useAppStore } from "../../../store";
 import { getProducts } from "../../../services/product";
+import { getTour } from "../../../services/tour";
+import { getRedSlip } from "../../../services/red-slip";
 import { createOrder, generateOrderNo } from "../../../services/order";
 import {
   getDeliveryLocations,
   createDeliveryLocation,
   incrementUsageCount,
 } from "../../../services/delivery-location";
-import type { Product, DeliveryMethod, DeliveryLocation, OrderItem } from "../../../types";
+import type { Product, DeliveryMethod, DeliveryLocation, OrderItem, RedSlip, RedSlipItem } from "../../../types";
 import { DELIVERY_METHOD_MAP } from "../../../types";
 import "./index.css";
+
+interface DisplayProduct {
+  _id: string;
+  name: string;
+  spec: string;
+  unit: string;
+  price: number; // cents, from red slip or product table
+}
 
 export default function OrderCreate() {
   const router = useRouter();
   const tourId = router.params.tourId || "";
   const { user } = useAppStore();
 
-  const [products, setProducts] = useState<Product[]>([]);
+  const [displayProducts, setDisplayProducts] = useState<DisplayProduct[]>([]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [editPrices, setEditPrices] = useState<Record<string, number>>({});
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("hotel");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryTime, setDeliveryTime] = useState("");
@@ -27,17 +38,55 @@ export default function OrderCreate() {
   const [selectedLocationId, setSelectedLocationId] = useState("");
   const [showNewLocation, setShowNewLocation] = useState(false);
   const [step, setStep] = useState<"products" | "delivery" | "confirm">("products");
+  const [redSlipName, setRedSlipName] = useState("");
 
   useEffect(() => {
     loadProducts();
   }, []);
 
   async function loadProducts() {
-    const data = await getProducts();
-    setProducts(data);
+    let items: DisplayProduct[] = [];
+    // Try to load red slip from tour
+    if (tourId) {
+      try {
+        const tour = await getTour(tourId);
+        if (tour?.redSlipId) {
+          const slip = await getRedSlip(tour.redSlipId);
+          if (slip && slip.items.length > 0) {
+            setRedSlipName(slip.name);
+            items = slip.items.map((si: RedSlipItem) => ({
+              _id: si.productId,
+              name: si.productName,
+              spec: si.spec,
+              unit: si.unit,
+              price: si.price,
+            }));
+          }
+        }
+      } catch {
+        // Fall through to load all products
+      }
+    }
+    // Fallback: load all active products
+    if (items.length === 0) {
+      const data = await getProducts();
+      items = data.map((p: Product) => ({
+        _id: p._id,
+        name: p.name,
+        spec: p.spec,
+        unit: p.unit,
+        price: p.price,
+      }));
+    }
+    setDisplayProducts(items);
     const defaultQty: Record<string, number> = {};
-    data.forEach((p) => (defaultQty[p._id] = 0));
+    const defaultPrices: Record<string, number> = {};
+    items.forEach((p) => {
+      defaultQty[p._id] = 0;
+      defaultPrices[p._id] = p.price;
+    });
     setQuantities(defaultQty);
+    setEditPrices(defaultPrices);
   }
 
   function updateQuantity(productId: string, delta: number) {
@@ -47,27 +96,40 @@ export default function OrderCreate() {
     }));
   }
 
+  function handlePriceChange(productId: string, val: string) {
+    const yuan = parseFloat(val);
+    if (!isNaN(yuan)) {
+      setEditPrices((prev) => ({ ...prev, [productId]: Math.round(yuan * 100) }));
+    } else if (val === "") {
+      setEditPrices((prev) => ({ ...prev, [productId]: 0 }));
+    }
+  }
+
   function totalSets() {
     return Object.values(quantities).reduce((sum, q) => sum + q, 0);
   }
 
   function totalAmount() {
-    return products.reduce(
-      (sum, p) => sum + (quantities[p._id] || 0) * p.price,
+    return displayProducts.reduce(
+      (sum, p) => sum + (quantities[p._id] || 0) * (editPrices[p._id] || p.price),
       0
     );
   }
 
   function buildItems(): OrderItem[] {
-    return products
+    return displayProducts
       .filter((p) => (quantities[p._id] || 0) > 0)
-      .map((p) => ({
-        productId: p._id,
-        productName: p.name,
-        quantity: quantities[p._id],
-        unitPrice: p.price,
-        subtotal: quantities[p._id] * p.price,
-      }));
+      .map((p) => {
+        const qty = quantities[p._id];
+        const price = editPrices[p._id] || p.price;
+        return {
+          productId: p._id,
+          productName: p.name,
+          quantity: qty,
+          unitPrice: price,
+          subtotal: qty * price,
+        };
+      });
   }
 
   async function loadLocations() {
@@ -155,13 +217,26 @@ export default function OrderCreate() {
     return (
       <View className="page">
         <Text className="page-title">选择商品和数量</Text>
-        {products.map((p) => (
+        {redSlipName && (
+          <Text className="red-slip-hint">红单：{redSlipName}</Text>
+        )}
+        {displayProducts.map((p) => (
           <View key={p._id} className="product-row">
             <View className="product-info">
               <Text className="product-name">{p.name}</Text>
               <Text className="product-spec">
                 {p.spec} / {p.unit}
               </Text>
+              <View className="price-edit-row">
+                <Text className="price-label">单价：</Text>
+                <Input
+                  className="price-inline-input"
+                  type="digit"
+                  value={((editPrices[p._id] || 0) / 100).toString()}
+                  onInput={(e) => handlePriceChange(p._id, e.detail.value)}
+                />
+                <Text className="price-yuan">元</Text>
+              </View>
             </View>
             <View className="qty-control">
               <View className="qty-btn" onClick={() => updateQuantity(p._id, -1)}>
@@ -176,7 +251,7 @@ export default function OrderCreate() {
         ))}
         <View className="summary-bar">
           <Text className="summary-text">
-            合计：{totalSets()}套
+            合计：{totalSets()}套 / ¥{(totalAmount() / 100).toFixed(2)}
           </Text>
           <Button className="btn-next" onClick={handleNext}>
             下一步
@@ -294,11 +369,13 @@ export default function OrderCreate() {
         <Text className="section-label">商品</Text>
         {items.map((item) => (
           <View key={item.productId} className="confirm-item">
-            <Text>{item.productName} × {item.quantity}套</Text>
+            <Text>{item.productName} x {item.quantity}套</Text>
+            <Text className="total-amount">¥{(item.subtotal / 100).toFixed(2)}</Text>
           </View>
         ))}
         <View className="confirm-total">
           <Text>合计：{totalSets()}套</Text>
+          <Text className="total-amount">¥{(totalAmount() / 100).toFixed(2)}</Text>
         </View>
       </View>
 

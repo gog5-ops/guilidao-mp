@@ -37,6 +37,23 @@ export interface Product {
   updatedAt: string;
 }
 
+export interface RedSlipItem {
+  productId: string;
+  productName: string;
+  price: number; // cents
+  unit: string;
+  spec: string;
+}
+
+export interface RedSlip {
+  _id: string;
+  name: string;
+  items: RedSlipItem[];
+  isActive: boolean;
+  createdBy: string;
+  createdAt: string;
+}
+
 export interface Tour {
   _id: string;
   tourCode: string;
@@ -44,6 +61,7 @@ export interface Tour {
   guideId: string;
   orderCount: number;
   status: TourStatus;
+  redSlipId?: string;
   createdAt: string;
 }
 

@@ -14,6 +14,7 @@ export default defineAppConfig({
     "pages/admin/index",
     "pages/product/index",
     "pages/profile/index",
+    "pages/red-slip/index",
   ],
   window: {
     backgroundTextStyle: "light",
