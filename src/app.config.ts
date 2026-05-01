@@ -12,6 +12,7 @@ export default defineAppConfig({
     "pages/notes/index",
     "pages/stats/index",
     "pages/admin/index",
+    "pages/product/index",
     "pages/profile/index",
   ],
   window: {

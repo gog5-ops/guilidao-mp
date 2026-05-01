@@ -17,6 +17,20 @@
   color: #333;
 }
 
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-manage {
+  font-size: 26px;
+  color: #fff;
+  background: #8B5E3C;
+  padding: 8px 20px;
+  border-radius: 8px;
+}
+
 .btn-logout {
   font-size: 26px;
   color: #999;

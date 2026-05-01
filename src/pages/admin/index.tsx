@@ -116,7 +116,10 @@ export default function AdminPage() {
     <View className="page">
       <View className="header-top">
         <Text className="welcome" onClick={() => Taro.navigateTo({ url: "/pages/profile/index" })}>你好，{user?.name || "管理员"} &gt;</Text>
-        <Text className="btn-logout" onClick={handleLogout}>退出</Text>
+        <View className="header-actions">
+          <Text className="btn-manage" onClick={() => Taro.navigateTo({ url: "/pages/product/index" })}>商品管理</Text>
+          <Text className="btn-logout" onClick={handleLogout}>退出</Text>
+        </View>
       </View>
 
       {/* Summary cards */}
