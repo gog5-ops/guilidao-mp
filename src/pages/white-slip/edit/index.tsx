@@ -267,7 +267,7 @@ export default function WhiteSlipEdit() {
 
   function handlePriceChange(guestIndex: number, productId: string, val: string) {
     const yuan = parseFloat(val);
-    if (!isNaN(yuan) && yuan >= 0) {
+    if (!isNaN(yuan)) {
       updateGuest(guestIndex, (g) => ({
         ...g,
         editPrices: { ...g.editPrices, [productId]: Math.round(yuan * 100) },
@@ -509,12 +509,11 @@ export default function WhiteSlipEdit() {
                 <View className="custom-price-row">
                   <Input
                     className="custom-price-input"
-                    type="digit"
                     value={item.price ? (item.price / 100).toString() : ""}
                     onInput={(e) =>
                       updateCustomItemPrice(gi, item.id, e.detail.value)
                     }
-                    placeholder="单价"
+                    placeholder="单价（负数=优惠）"
                   />
                   <Text className="price-yuan">元</Text>
                 </View>
@@ -544,7 +543,7 @@ export default function WhiteSlipEdit() {
           ))}
 
           <View className="custom-add-btn" onClick={() => addCustomItem(gi)}>
-            <Text>+ 自定义商品</Text>
+            <Text>+ 自定义商品/优惠</Text>
           </View>
 
           {/* Delivery section */}
