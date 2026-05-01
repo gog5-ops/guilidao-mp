@@ -1,0 +1,26 @@
+services:
+  dev:
+    build:
+      context: .
+      target: dev
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./dist:/app/dist
+    ports:
+      - "10086:10086"
+    command: npm run dev:weapp
+
+  build:
+    build:
+      context: .
+      target: build
+    volumes:
+      - ./dist:/app/dist
+
+  h5:
+    build:
+      context: .
+      target: serve-h5
+    ports:
+      - "8080:80"

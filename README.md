@@ -75,6 +75,30 @@ guilidao-mp/
 └── package.json
 ```
 
+## Docker 开发
+
+```bash
+# 开发模式（热更新，修改 src/ 自动编译到 dist/）
+docker compose up dev
+
+# 一次性构建
+docker compose run build
+
+# H5 预览（浏览器访问 http://localhost:8080）
+docker compose up h5
+```
+
+微信小程序预览：用微信开发者工具打开项目根目录下的 `dist/` 文件夹。
+
+## 本地开发（不用 Docker）
+
+```bash
+npm install
+npm run dev:weapp    # 开发模式
+npm run build:weapp  # 构建
+npm run dev:h5       # H5 预览
+```
+
 ## 开发计划
 
 - [ ] MVP: 导游下单 + 汇总单生成 + 供货商通知
