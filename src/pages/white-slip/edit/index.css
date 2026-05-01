@@ -9,7 +9,9 @@
 
 .guest-card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
 .guest-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.guest-no { font-size: 30px; font-weight: bold; color: #8B5E3C; }
+.guest-no-edit { display: flex; align-items: center; gap: 8px; }
+.guest-no-label { font-size: 30px; font-weight: bold; color: #8B5E3C; }
+.guest-no-input { width: 120px; font-size: 28px; font-weight: bold; color: #8B5E3C; border: none; border-bottom: 2px solid #8B5E3C; background: transparent; padding: 4px 0; }
 .guest-delete { font-size: 24px; color: #C62828; padding: 8px 16px; border: 1px solid #C62828; border-radius: 6px; }
 
 .product-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f5f5f5; }

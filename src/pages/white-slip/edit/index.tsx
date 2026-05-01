@@ -267,7 +267,7 @@ export default function WhiteSlipEdit() {
 
   function handlePriceChange(guestIndex: number, productId: string, val: string) {
     const yuan = parseFloat(val);
-    if (!isNaN(yuan)) {
+    if (!isNaN(yuan) && yuan >= 0) {
       updateGuest(guestIndex, (g) => ({
         ...g,
         editPrices: { ...g.editPrices, [productId]: Math.round(yuan * 100) },
@@ -342,11 +342,7 @@ export default function WhiteSlipEdit() {
       Taro.showToast({ title: "至少保留一位游客", icon: "none" });
       return;
     }
-    setGuests((prev) => {
-      const next = prev.filter((_, i) => i !== index);
-      // Re-number guests
-      return next.map((g, i) => ({ ...g, guestNo: makeGuestNo(i) }));
-    });
+    setGuests((prev) => prev.filter((_, i) => i !== index));
   }
 
   function computeTotals() {
@@ -391,6 +387,7 @@ export default function WhiteSlipEdit() {
         setExistingSlipId(id);
       }
       Taro.showToast({ title: "保存成功", icon: "success" });
+      setTimeout(() => Taro.navigateBack(), 500);
     } catch {
       Taro.showToast({ title: "保存失败", icon: "none" });
     } finally {
@@ -428,9 +425,19 @@ export default function WhiteSlipEdit() {
       </View>
 
       {guests.map((guest, gi) => (
-        <View key={guest.guestNo} className="guest-card">
+        <View key={gi} className="guest-card">
           <View className="guest-card-header">
-            <Text className="guest-no">游客 {guest.guestNo}</Text>
+            <View className="guest-no-edit">
+              <Text className="guest-no-label">游客</Text>
+              <Input
+                className="guest-no-input"
+                value={guest.guestNo}
+                onInput={(e) =>
+                  updateGuest(gi, (g) => ({ ...g, guestNo: e.detail.value }))
+                }
+                placeholder="编号"
+              />
+            </View>
             <Text className="guest-delete" onClick={() => removeGuest(gi)}>
               删除
             </Text>
