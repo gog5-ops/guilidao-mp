@@ -23,24 +23,4 @@ export default defineAppConfig({
     navigationBarTitleText: "桂礼道",
     navigationBarTextStyle: "white",
   },
-  tabBar: {
-    color: "#999999",
-    selectedColor: "#8B5E3C",
-    backgroundColor: "#ffffff",
-    borderStyle: "black",
-    list: [
-      {
-        pagePath: "pages/index/index",
-        text: "首页",
-      },
-      {
-        pagePath: "pages/supplier/orders/index",
-        text: "订单",
-      },
-      {
-        pagePath: "pages/stats/index",
-        text: "统计",
-      },
-    ],
-  },
 });
