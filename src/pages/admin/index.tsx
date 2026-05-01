@@ -1,15 +1,16 @@
-import { useEffect, useState } from "react";
-import { View, Text } from "@tarojs/components";
+import { useEffect, useState, useMemo } from "react";
+import { View, Text, Input, Picker } from "@tarojs/components";
 import Taro, { useDidShow } from "@tarojs/taro";
 import { useAppStore } from "../../store";
 import { getAllOrders } from "../../services/order";
 import { getAllTours } from "../../services/tour";
-import type { Order, OrderStatus, Tour } from "../../types";
+import { getSupplierOrders } from "../../services/supplier-order";
+import type { Order, OrderStatus, Tour, SupplierOrder } from "../../types";
 import { ORDER_STATUS_MAP, DELIVERY_METHOD_MAP } from "../../types";
 import "./index.css";
 
 type StatusFilter = "all" | OrderStatus;
-type DateFilter = "all" | "today" | "week" | "month";
+type QuickFilter = "" | "unshipped" | "no-tracking" | "rejected";
 
 const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
   { key: "all", label: "全部" },
@@ -20,32 +21,37 @@ const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
   { key: "rejected", label: "已拒单" },
 ];
 
-const DATE_FILTERS: { key: DateFilter; label: string }[] = [
-  { key: "all", label: "全部" },
-  { key: "today", label: "今天" },
-  { key: "week", label: "本周" },
-  { key: "month", label: "本月" },
+const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
+  { key: "unshipped", label: "未发货" },
+  { key: "no-tracking", label: "快递待填" },
+  { key: "rejected", label: "已拒单" },
 ];
 
-function getDateRange(filter: DateFilter): { start: Date; end: Date } | null {
-  if (filter === "all") return null;
+function formatDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function getQuickDateRange(preset: string): { start: string; end: string } {
   const now = new Date();
-  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-  let start: Date;
-  switch (filter) {
+  const end = formatDate(now);
+  let startDate: Date;
+  switch (preset) {
     case "today":
-      start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      break;
+      return { start: end, end };
     case "week": {
       const day = now.getDay() || 7;
-      start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day + 1);
-      break;
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day + 1);
+      return { start: formatDate(startDate), end };
     }
     case "month":
-      start = new Date(now.getFullYear(), now.getMonth(), 1);
-      break;
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { start: formatDate(startDate), end };
+    default:
+      return { start: "", end: "" };
   }
-  return { start, end };
 }
 
 function escapeCsvField(value: string): string {
@@ -64,8 +70,13 @@ export default function AdminPage() {
   const { user, setUser } = useAppStore();
   const [orders, setOrders] = useState<Order[]>([]);
   const [tours, setTours] = useState<Tour[]>([]);
+  const [supplierOrders, setSupplierOrders] = useState<SupplierOrder[]>([]);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [dateFilter, setDateFilter] = useState<DateFilter>("all");
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>("");
+  const [dateStart, setDateStart] = useState("");
+  const [dateEnd, setDateEnd] = useState("");
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [guideFilter, setGuideFilter] = useState("all");
 
   useEffect(() => {
     loadData();
@@ -76,12 +87,14 @@ export default function AdminPage() {
   });
 
   async function loadData() {
-    const [orderData, tourData] = await Promise.all([
+    const [orderData, tourData, supplierData] = await Promise.all([
       getAllOrders(),
       getAllTours(),
+      getSupplierOrders(),
     ]);
     setOrders(orderData);
     setTours(tourData);
+    setSupplierOrders(supplierData);
   }
 
   function handleLogout() {
@@ -89,14 +102,106 @@ export default function AdminPage() {
     Taro.reLaunch({ url: "/pages/index/index" });
   }
 
+  // Build guideId -> guideName map from supplier orders
+  const guideNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const so of supplierOrders) {
+      if (so.guideId && so.guideName) {
+        map.set(so.guideId, so.guideName);
+      }
+    }
+    return map;
+  }, [supplierOrders]);
+
+  // Build guide options for dropdown
+  const guideOptions = useMemo(() => {
+    const uniqueGuides = new Map<string, string>();
+    for (const order of orders) {
+      if (!uniqueGuides.has(order.guideId)) {
+        uniqueGuides.set(order.guideId, guideNameMap.get(order.guideId) || order.guideId);
+      }
+    }
+    return Array.from(uniqueGuides.entries()).map(([id, name]) => ({ id, name }));
+  }, [orders, guideNameMap]);
+
+  function handleQuickDate(preset: string) {
+    const range = getQuickDateRange(preset);
+    setDateStart(range.start);
+    setDateEnd(range.end);
+  }
+
+  function handleQuickFilter(key: QuickFilter) {
+    if (quickFilter === key) {
+      setQuickFilter("");
+      return;
+    }
+    setQuickFilter(key);
+    // Clear status filter when using quick filter
+    setStatusFilter("all");
+  }
+
+  function handleStatusFilter(key: StatusFilter) {
+    setStatusFilter(key);
+    // Clear quick filter when using status filter
+    setQuickFilter("");
+  }
+
   // Filter orders
   const filteredOrders = orders.filter((order) => {
-    if (statusFilter !== "all" && order.status !== statusFilter) return false;
-    const range = getDateRange(dateFilter);
-    if (range) {
-      const orderDate = new Date(order.createdAt);
-      if (orderDate < range.start || orderDate > range.end) return false;
+    // Quick filter takes precedence
+    if (quickFilter) {
+      switch (quickFilter) {
+        case "unshipped":
+          if (order.status !== "pending" && order.status !== "confirmed") return false;
+          break;
+        case "no-tracking": {
+          if (order.deliveryMethod !== "express") return false;
+          // Check if the corresponding supplier order has a tracking number
+          const hasSO = supplierOrders.some(
+            (so) => so.guideId === order.guideId && so.tourId === order.tourId && !so.trackingNumber
+          );
+          if (!hasSO) return false;
+          break;
+        }
+        case "rejected":
+          if (order.status !== "rejected") return false;
+          break;
+      }
+    } else {
+      if (statusFilter !== "all" && order.status !== statusFilter) return false;
     }
+
+    // Date range filter
+    if (dateStart) {
+      const orderDate = new Date(order.createdAt);
+      const startDate = new Date(dateStart + "T00:00:00");
+      if (orderDate < startDate) return false;
+    }
+    if (dateEnd) {
+      const orderDate = new Date(order.createdAt);
+      const endDate = new Date(dateEnd + "T23:59:59");
+      if (orderDate > endDate) return false;
+    }
+
+    // Guide filter
+    if (guideFilter !== "all" && order.guideId !== guideFilter) return false;
+
+    // Keyword search
+    if (searchKeyword.trim()) {
+      const kw = searchKeyword.trim().toLowerCase();
+      const guideName = guideNameMap.get(order.guideId) || "";
+      const productNames = order.items.map((i) => i.productName).join(" ");
+      const searchable = [
+        order.orderNo,
+        guideName,
+        productNames,
+        order.remark || "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      if (!searchable.includes(kw)) return false;
+    }
+
     return true;
   });
 
@@ -210,36 +315,112 @@ export default function AdminPage() {
         )}
       </View>
 
-      {/* Filters */}
+      {/* Search and Filters */}
       <View className="section">
         <Text className="section-title">订单列表</Text>
+
+        {/* Keyword search */}
+        <View className="search-bar">
+          <Input
+            className="search-input"
+            placeholder="搜索订单号、导游、商品、备注..."
+            value={searchKeyword}
+            onInput={(e) => setSearchKeyword(e.detail.value)}
+          />
+        </View>
+
+        {/* Guide filter */}
+        <View className="filter-section">
+          <Text className="filter-label">导游筛选</Text>
+          <Picker
+            mode="selector"
+            range={[{ id: "all", name: "全部导游" }, ...guideOptions]}
+            rangeKey="name"
+            value={guideFilter === "all" ? 0 : guideOptions.findIndex((g) => g.id === guideFilter) + 1}
+            onChange={(e) => {
+              const idx = Number(e.detail.value);
+              if (idx === 0) {
+                setGuideFilter("all");
+              } else {
+                setGuideFilter(guideOptions[idx - 1].id);
+              }
+            }}
+          >
+            <View className="picker-display">
+              <Text className="picker-text">
+                {guideFilter === "all"
+                  ? "全部导游"
+                  : guideNameMap.get(guideFilter) || guideFilter}
+              </Text>
+              <Text className="picker-arrow">&#9662;</Text>
+            </View>
+          </Picker>
+        </View>
+
         <View className="filters">
+          {/* Status filter */}
           <View className="filter-row">
             {STATUS_FILTERS.map((f) => (
               <Text
                 key={f.key}
-                className={`filter-btn ${statusFilter === f.key ? "active" : ""}`}
-                onClick={() => setStatusFilter(f.key)}
+                className={`filter-btn ${statusFilter === f.key && !quickFilter ? "active" : ""}`}
+                onClick={() => handleStatusFilter(f.key)}
               >
                 {f.label}
               </Text>
             ))}
           </View>
+
+          {/* Quick filters */}
           <View className="filter-row">
-            {DATE_FILTERS.map((f) => (
+            {QUICK_FILTERS.map((f) => (
               <Text
                 key={f.key}
-                className={`filter-btn ${dateFilter === f.key ? "active" : ""}`}
-                onClick={() => setDateFilter(f.key)}
+                className={`filter-btn quick-btn ${quickFilter === f.key ? "active" : ""}`}
+                onClick={() => handleQuickFilter(f.key)}
               >
                 {f.label}
               </Text>
             ))}
+          </View>
+
+          {/* Date range */}
+          <View className="date-range-section">
+            <View className="date-range-row">
+              <Picker mode="date" value={dateStart} onChange={(e) => setDateStart(e.detail.value)}>
+                <View className="date-picker-box">
+                  <Text className="date-picker-text">{dateStart || "开始日期"}</Text>
+                </View>
+              </Picker>
+              <Text className="date-separator">至</Text>
+              <Picker mode="date" value={dateEnd} onChange={(e) => setDateEnd(e.detail.value)}>
+                <View className="date-picker-box">
+                  <Text className="date-picker-text">{dateEnd || "结束日期"}</Text>
+                </View>
+              </Picker>
+              {(dateStart || dateEnd) && (
+                <Text
+                  className="date-clear"
+                  onClick={() => { setDateStart(""); setDateEnd(""); }}
+                >
+                  清除
+                </Text>
+              )}
+            </View>
+            <View className="date-quick-row">
+              <Text className="date-quick-btn" onClick={() => handleQuickDate("today")}>今天</Text>
+              <Text className="date-quick-btn" onClick={() => handleQuickDate("week")}>本周</Text>
+              <Text className="date-quick-btn" onClick={() => handleQuickDate("month")}>本月</Text>
+              <Text className="date-quick-btn" onClick={() => { setDateStart(""); setDateEnd(""); }}>全部</Text>
+            </View>
           </View>
         </View>
 
-        {/* Export CSV button */}
-        <Text className="btn-export" onClick={handleExportCSV}>导出 CSV</Text>
+        {/* Result count */}
+        <View className="result-count-row">
+          <Text className="result-count">共 {filteredOrders.length} 条结果</Text>
+          <Text className="btn-export" onClick={handleExportCSV}>导出 CSV</Text>
+        </View>
 
         {/* Order list */}
         {filteredOrders.length === 0 ? (
@@ -254,7 +435,7 @@ export default function AdminPage() {
                 </Text>
               </View>
               <Text className="order-info">
-                导游ID: {order.guideId}
+                导游: {guideNameMap.get(order.guideId) || order.guideId}
               </Text>
               <View className="order-footer">
                 <Text className="order-date">
