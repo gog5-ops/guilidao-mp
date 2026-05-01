@@ -1,5 +1,5 @@
 import Taro from "@tarojs/taro";
-import { mockDatabase } from "./mock-db";
+import { mockDatabase, restoreFromStorage, persistAll } from "./mock-db";
 
 const isH5 = process.env.TARO_ENV === "h5";
 
@@ -7,10 +7,15 @@ const cloud = Taro.cloud;
 
 export function initCloud() {
   if (isH5) {
-    // Seed mock data instead of connecting to cloud
-    const { seedMockData } = require("./mock-data");
-    seedMockData();
-    console.log("[mock-db] H5 mode: mock data seeded");
+    const restored = restoreFromStorage();
+    if (restored) {
+      console.log("[mock-db] H5 mode: restored from localStorage");
+    } else {
+      const { seedMockData } = require("./mock-data");
+      seedMockData();
+      persistAll();
+      console.log("[mock-db] H5 mode: mock data seeded + persisted");
+    }
     return;
   }
   cloud.init({ traceUser: true });

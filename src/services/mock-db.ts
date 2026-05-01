@@ -5,9 +5,40 @@
 
 type Record_ = { _id: string; [key: string]: unknown };
 
+const STORAGE_KEY = "guilidao_mock_db";
+const COUNTER_KEY = "guilidao_mock_id";
+
 const store = new Map<string, Record_[]>();
 
 let idCounter = 0;
+
+function saveToStorage(): void {
+  try {
+    const obj: Record<string, Record_[]> = {};
+    store.forEach((v, k) => { obj[k] = v; });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+    localStorage.setItem(COUNTER_KEY, String(idCounter));
+  } catch {}
+}
+
+function loadFromStorage(): boolean {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const counter = localStorage.getItem(COUNTER_KEY);
+    if (!raw) return false;
+    const obj = JSON.parse(raw) as Record<string, Record_[]>;
+    for (const [k, v] of Object.entries(obj)) {
+      store.set(k, v);
+    }
+    if (counter) idCounter = parseInt(counter, 10) || 0;
+    return store.size > 0;
+  } catch { return false; }
+}
+
+export function hasPersistedData(): boolean {
+  return !!localStorage.getItem(STORAGE_KEY);
+}
+
 function nextId(): string {
   idCounter += 1;
   return `mock_${idCounter}`;
@@ -100,6 +131,7 @@ function mockCollection(name: string): MockCollection {
       const id = nextId();
       const record: Record_ = { _id: id, ...opts.data };
       table.push(record);
+      saveToStorage();
       return { _id: id };
     },
 
@@ -120,12 +152,14 @@ function mockCollection(name: string): MockCollection {
             throw new Error(`mock-db: doc ${id} not found in ${name}`);
           }
           applyUpdate(record, opts.data);
+          saveToStorage();
         },
         async remove() {
           const table = getTable(name);
           const idx = table.findIndex((r) => r._id === id);
           if (idx !== -1) {
             table.splice(idx, 1);
+            saveToStorage();
           }
         },
       };
@@ -168,8 +202,19 @@ export function seedRecord(collectionName: string, record: Record_): void {
   table.push(record);
 }
 
+/** Save all current data to localStorage. */
+export function persistAll(): void {
+  saveToStorage();
+}
+
+/** Load persisted data from localStorage. Returns true if data was found. */
+export function restoreFromStorage(): boolean {
+  return loadFromStorage();
+}
+
 /** Clear all mock data (useful for testing). */
 export function clearMockData(): void {
   store.clear();
   idCounter = 0;
+  try { localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(COUNTER_KEY); } catch {}
 }
