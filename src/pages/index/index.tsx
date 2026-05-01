@@ -202,7 +202,7 @@ export default function Index() {
     <View className="page">
       <View className="header">
         <View className="header-top">
-          <Text className="welcome">你好，{user.name}</Text>
+          <Text className="welcome" onClick={() => Taro.navigateTo({ url: "/pages/profile/index" })}>你好，{user.name} &gt;</Text>
           <Text className="btn-logout" onClick={handleLogout}>退出</Text>
         </View>
         <Button className="btn-create" onClick={handleCreateTour}>

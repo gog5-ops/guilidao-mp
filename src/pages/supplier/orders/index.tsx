@@ -46,7 +46,7 @@ export default function SupplierOrders() {
   return (
     <View className="page">
       <View className="header-top">
-        <Text className="welcome">你好，{user?.name || "供货商"}</Text>
+        <Text className="welcome" onClick={() => Taro.navigateTo({ url: "/pages/profile/index" })}>你好，{user?.name || "供货商"} &gt;</Text>
         <Text className="btn-logout" onClick={handleLogout}>退出</Text>
       </View>
       <View className="tabs">
