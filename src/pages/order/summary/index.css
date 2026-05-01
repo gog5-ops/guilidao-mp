@@ -1,0 +1,19 @@
+.page { padding: 24px; min-height: 100vh; }
+.page-center { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+
+.summary-header { background: #8B5E3C; color: #fff; border-radius: 12px; padding: 24px; margin-bottom: 24px; text-align: center; }
+.summary-brand { display: block; font-size: 32px; font-weight: bold; margin-bottom: 8px; }
+.summary-info { font-size: 24px; opacity: 0.9; }
+
+.table-scroll { width: 100%; }
+.table { background: #fff; border-radius: 8px; overflow: hidden; min-width: 100%; }
+.table-row { display: flex; border-bottom: 1px solid #f0f0f0; }
+.table-header { background: #f8f4f0; font-weight: bold; }
+.table-footer { background: #f8f4f0; font-weight: bold; }
+
+.cell { padding: 16px 12px; font-size: 24px; text-align: center; min-width: 80px; }
+.cell-no { min-width: 120px; text-align: left; font-weight: bold; }
+.cell-product { min-width: 80px; }
+.cell-amount { min-width: 100px; text-align: right; color: #8B5E3C; font-weight: bold; }
+
+.grand-total { margin-top: 24px; text-align: center; font-size: 30px; font-weight: bold; color: #8B5E3C; }

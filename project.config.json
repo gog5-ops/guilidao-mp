@@ -1,0 +1,16 @@
+{
+  "miniprogramRoot": "dist/",
+  "projectname": "guilidao-mp",
+  "description": "桂礼道旅游特产销售管理系统",
+  "appid": "touristappid",
+  "setting": {
+    "urlCheck": true,
+    "es6": false,
+    "enhance": false,
+    "compileHotReLoad": false,
+    "postcss": false,
+    "minified": false,
+    "newFeature": true
+  },
+  "compileType": "miniprogram"
+}

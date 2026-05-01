@@ -1,0 +1,33 @@
+.page { padding: 24px; padding-bottom: 140px; min-height: 100vh; }
+.page-title { display: block; font-size: 34px; font-weight: bold; color: #333; margin-bottom: 24px; }
+
+.product-row { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 20px 24px; border-radius: 8px; margin-bottom: 12px; }
+.product-info { flex: 1; }
+.product-name { display: block; font-size: 30px; color: #333; margin-bottom: 4px; }
+.product-spec { display: block; font-size: 22px; color: #999; }
+
+.qty-control { display: flex; align-items: center; gap: 16px; }
+.qty-btn { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; background: #f0f0f0; border-radius: 28px; font-size: 32px; }
+.qty-value { font-size: 32px; font-weight: bold; min-width: 40px; text-align: center; }
+
+.summary-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -2px 8px rgba(0,0,0,0.1); }
+.summary-text { font-size: 28px; color: #333; font-weight: bold; }
+.btn-next { background: #8B5E3C; color: #fff; border: none; border-radius: 8px; font-size: 28px; padding: 16px 40px; }
+
+.delivery-options { display: flex; gap: 12px; margin-bottom: 32px; }
+.delivery-option { flex: 1; text-align: center; padding: 20px 0; background: #fff; border: 2px solid #eee; border-radius: 8px; font-size: 26px; color: #666; }
+.delivery-option.active { border-color: #8B5E3C; color: #8B5E3C; background: #FFF8F0; }
+
+.form-group { margin-bottom: 24px; }
+.label { display: block; font-size: 26px; color: #666; margin-bottom: 8px; }
+.input { display: block; width: 100%; padding: 20px 24px; font-size: 28px; background: #fff; border: 2px solid #eee; border-radius: 8px; box-sizing: border-box; }
+
+.btn-group { display: flex; gap: 16px; margin-top: 40px; }
+.btn-back { flex: 1; background: #fff; color: #666; border: 2px solid #ddd; border-radius: 8px; font-size: 28px; padding: 20px 0; }
+.btn-submit { flex: 1; background: #8B5E3C; color: #fff; border: none; border-radius: 8px; font-size: 28px; padding: 20px 0; }
+
+.confirm-section { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+.section-label { display: block; font-size: 26px; color: #999; margin-bottom: 16px; }
+.confirm-item { display: flex; justify-content: space-between; padding: 8px 0; font-size: 28px; color: #333; }
+.confirm-total { display: flex; justify-content: space-between; padding-top: 16px; margin-top: 12px; border-top: 1px solid #eee; font-size: 30px; font-weight: bold; }
+.total-amount { color: #8B5E3C; }

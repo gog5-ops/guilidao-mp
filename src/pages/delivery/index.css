@@ -1,0 +1,11 @@
+.page { padding: 32px; min-height: 100vh; }
+
+.delivery-options { display: flex; gap: 12px; margin-bottom: 32px; }
+.option { flex: 1; text-align: center; padding: 20px 0; background: #fff; border: 2px solid #eee; border-radius: 8px; font-size: 26px; color: #666; }
+.option.active { border-color: #8B5E3C; color: #8B5E3C; background: #FFF8F0; }
+
+.form-group { margin-bottom: 24px; }
+.label { display: block; font-size: 26px; color: #666; margin-bottom: 8px; }
+.input { display: block; width: 100%; padding: 20px 24px; font-size: 28px; background: #fff; border: 2px solid #eee; border-radius: 8px; box-sizing: border-box; }
+
+.btn-save { margin-top: 40px; background: #8B5E3C; color: #fff; border: none; border-radius: 12px; font-size: 32px; padding: 24px 0; }

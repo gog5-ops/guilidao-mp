@@ -1,0 +1,163 @@
+.page-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px;
+}
+
+.brand {
+  text-align: center;
+  margin-bottom: 80px;
+}
+
+.brand-title {
+  display: block;
+  font-size: 48px;
+  font-weight: bold;
+  color: #8B5E3C;
+  margin-bottom: 16px;
+}
+
+.brand-sub {
+  display: block;
+  font-size: 28px;
+  color: #999;
+}
+
+.role-select {
+  width: 100%;
+}
+
+.role-title {
+  display: block;
+  text-align: center;
+  font-size: 32px;
+  color: #666;
+  margin-bottom: 40px;
+}
+
+.btn-primary {
+  background-color: #8B5E3C;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 32px;
+  padding: 24px 0;
+  margin-bottom: 24px;
+}
+
+.btn-secondary {
+  background-color: #fff;
+  color: #8B5E3C;
+  border: 2px solid #8B5E3C;
+  border-radius: 12px;
+  font-size: 32px;
+  padding: 24px 0;
+}
+
+.page {
+  padding: 24px;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.welcome {
+  font-size: 36px;
+  font-weight: bold;
+  color: #333;
+}
+
+.btn-create {
+  background-color: #8B5E3C;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 28px;
+  padding: 12px 24px;
+  line-height: 1.5;
+}
+
+.section-title {
+  display: block;
+  font-size: 30px;
+  font-weight: bold;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.tour-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.tour-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.tour-code {
+  font-size: 32px;
+  font-weight: bold;
+  color: #333;
+}
+
+.tour-status {
+  font-size: 24px;
+  padding: 4px 16px;
+  border-radius: 20px;
+}
+
+.status-draft {
+  background: #FFF3E0;
+  color: #E65100;
+}
+
+.status-submitted {
+  background: #E3F2FD;
+  color: #1565C0;
+}
+
+.status-completed {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.status-archived {
+  background: #F5F5F5;
+  color: #999;
+}
+
+.tour-info {
+  display: flex;
+  justify-content: space-between;
+}
+
+.tour-date {
+  font-size: 26px;
+  color: #999;
+}
+
+.tour-count {
+  font-size: 26px;
+  color: #666;
+}
+
+.empty {
+  text-align: center;
+  padding: 60px 0;
+  color: #ccc;
+  font-size: 28px;
+}

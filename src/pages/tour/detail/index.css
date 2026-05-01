@@ -1,0 +1,29 @@
+.page { padding: 24px; min-height: 100vh; }
+.page-center { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+
+.tour-header { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.tour-code { display: block; font-size: 36px; font-weight: bold; color: #8B5E3C; margin-bottom: 8px; }
+.tour-date { font-size: 26px; color: #999; }
+
+.actions { display: flex; gap: 16px; margin-bottom: 24px; }
+.btn-primary { flex: 1; background: #8B5E3C; color: #fff; border: none; border-radius: 8px; font-size: 28px; padding: 20px 0; }
+.btn-outline { flex: 1; background: #fff; color: #8B5E3C; border: 2px solid #8B5E3C; border-radius: 8px; font-size: 28px; padding: 20px 0; }
+
+.section-title { display: block; font-size: 28px; color: #666; margin-bottom: 16px; }
+
+.order-card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.order-no { font-size: 30px; font-weight: bold; color: #333; }
+.order-status { font-size: 22px; padding: 4px 12px; border-radius: 16px; }
+.status-pending { background: #FFF3E0; color: #E65100; }
+.status-confirmed { background: #E3F2FD; color: #1565C0; }
+.status-shipping { background: #E8F5E9; color: #2E7D32; }
+.status-delivered { background: #E8F5E9; color: #2E7D32; }
+.status-rejected { background: #FFEBEE; color: #C62828; }
+
+.order-items { font-size: 24px; color: #666; display: block; margin-bottom: 12px; }
+.order-footer { display: flex; justify-content: space-between; }
+.delivery { font-size: 24px; color: #999; }
+.amount { font-size: 28px; font-weight: bold; color: #8B5E3C; }
+
+.empty { text-align: center; padding: 60px 0; color: #ccc; font-size: 28px; }

@@ -1,0 +1,36 @@
+.page {
+  padding: 32px;
+  min-height: 100vh;
+}
+
+.form-group {
+  margin-bottom: 32px;
+}
+
+.label {
+  display: block;
+  font-size: 28px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.input {
+  display: block;
+  width: 100%;
+  padding: 20px 24px;
+  font-size: 30px;
+  background: #fff;
+  border: 2px solid #eee;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.btn-submit {
+  margin-top: 48px;
+  background-color: #8B5E3C;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 32px;
+  padding: 24px 0;
+}
