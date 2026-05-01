@@ -160,7 +160,7 @@ export default function OrderCreate() {
             <View className="product-info">
               <Text className="product-name">{p.name}</Text>
               <Text className="product-spec">
-                {p.spec} · ¥{p.price / 100}/{p.unit}
+                {p.spec} / {p.unit}
               </Text>
             </View>
             <View className="qty-control">
@@ -176,7 +176,7 @@ export default function OrderCreate() {
         ))}
         <View className="summary-bar">
           <Text className="summary-text">
-            合计：{totalSets()}套 · ¥{(totalAmount() / 100).toFixed(0)}
+            合计：{totalSets()}套
           </Text>
           <Button className="btn-next" onClick={handleNext}>
             下一步
@@ -295,12 +295,10 @@ export default function OrderCreate() {
         {items.map((item) => (
           <View key={item.productId} className="confirm-item">
             <Text>{item.productName} × {item.quantity}套</Text>
-            <Text>¥{(item.subtotal / 100).toFixed(0)}</Text>
           </View>
         ))}
         <View className="confirm-total">
-          <Text>合计</Text>
-          <Text className="total-amount">¥{(totalAmount() / 100).toFixed(0)}</Text>
+          <Text>合计：{totalSets()}套</Text>
         </View>
       </View>
 

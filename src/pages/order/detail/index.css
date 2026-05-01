@@ -28,9 +28,9 @@
 .note-time { font-size: 22px; color: #ccc; }
 .note-content { font-size: 28px; color: #666; }
 
-.note-input { display: flex; gap: 12px; margin-top: 16px; }
-.note-input .input { flex: 1; padding: 16px; background: #f5f5f5; border-radius: 8px; font-size: 26px; border: 1px solid #ddd; min-height: 44px; }
-.btn-send { background: #8B5E3C; color: #fff; border: none; border-radius: 8px; font-size: 26px; padding: 16px 24px; }
+.note-input { margin-top: 16px; }
+.note-input .input { width: 100%; padding: 16px; background: #f5f5f5; border-radius: 8px; font-size: 26px; border: 1px solid #ddd; min-height: 44px; box-sizing: border-box; margin-bottom: 12px; }
+.btn-send { width: 100%; background: #8B5E3C; color: #fff; border: none; border-radius: 8px; font-size: 26px; padding: 16px 0; }
 
 .status-pending { color: #E65100; }
 .status-confirmed { color: #1565C0; }

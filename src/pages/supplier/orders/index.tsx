@@ -87,7 +87,7 @@ export default function SupplierOrders() {
                 {order.deliveryAddress ? ` · ${order.deliveryAddress}` : ""}
               </Text>
               <Text className="amount">
-                ¥{(order.totalAmount / 100).toFixed(0)}
+                {order.items.reduce((s, i) => s + i.quantity, 0)}套
               </Text>
             </View>
           </View>

@@ -143,7 +143,7 @@ export default function TourDetail() {
                 <Text className="delivery">
                   {DELIVERY_METHOD_MAP[order.deliveryMethod]}
                 </Text>
-                <Text className="amount">¥{(order.totalAmount / 100).toFixed(0)}</Text>
+                <Text className="amount">{order.items.reduce((s, i) => s + i.quantity, 0)}套</Text>
               </View>
             </View>
           ))

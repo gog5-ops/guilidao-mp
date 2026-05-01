@@ -73,7 +73,7 @@ export default function OrderSummary() {
                 {p.name}
               </Text>
             ))}
-            <Text className="cell cell-amount">金额</Text>
+            <Text className="cell cell-amount">小计</Text>
           </View>
 
           {orders.map((order) => (
@@ -88,7 +88,7 @@ export default function OrderSummary() {
                 );
               })}
               <Text className="cell cell-amount">
-                ¥{(order.totalAmount / 100).toFixed(0)}
+                {order.items.reduce((s, i) => s + i.quantity, 0)}套
               </Text>
             </View>
           ))}
@@ -104,7 +104,7 @@ export default function OrderSummary() {
               );
             })}
             <Text className="cell cell-amount">
-              ¥{(grandTotal() / 100).toFixed(0)}
+              {totalSets()}套
             </Text>
           </View>
         </View>
@@ -112,7 +112,7 @@ export default function OrderSummary() {
 
       <View className="grand-total">
         <Text>
-          总套数：{totalSets()}套　　总金额：¥{(grandTotal() / 100).toFixed(0)}
+          总套数：{totalSets()}套
         </Text>
       </View>
     </View>

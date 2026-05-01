@@ -87,12 +87,10 @@ export default function OrderDetail() {
           <View key={item.productId} className="item-row">
             <Text className="item-name">{item.productName}</Text>
             <Text className="item-qty">×{item.quantity}套</Text>
-            <Text className="item-price">¥{(item.subtotal / 100).toFixed(0)}</Text>
           </View>
         ))}
         <View className="item-total">
-          <Text>合计</Text>
-          <Text className="total-price">¥{(order.totalAmount / 100).toFixed(0)}</Text>
+          <Text>合计：{order.items.reduce((s, i) => s + i.quantity, 0)}套</Text>
         </View>
       </View>
 
