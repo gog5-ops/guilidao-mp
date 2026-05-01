@@ -26,6 +26,12 @@
 .btn-back { flex: 1; background: #fff; color: #666; border: 2px solid #ddd; border-radius: 8px; font-size: 28px; padding: 20px 0; }
 .btn-submit { flex: 1; background: #8B5E3C; color: #fff; border: none; border-radius: 8px; font-size: 28px; padding: 20px 0; }
 
+.location-list { display: flex; flex-wrap: wrap; gap: 12px; }
+.location-item { padding: 16px 20px; background: #fff; border: 2px solid #eee; border-radius: 8px; font-size: 26px; color: #333; }
+.location-item.selected { border-color: #8B5E3C; color: #8B5E3C; background: #FFF8F0; }
+.location-item.add-new { border-style: dashed; color: #999; }
+.save-location { margin-top: 12px; text-align: right; font-size: 24px; color: #8B5E3C; }
+
 .confirm-section { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; }
 .section-label { display: block; font-size: 26px; color: #999; margin-bottom: 16px; }
 .confirm-item { display: flex; justify-content: space-between; padding: 8px 0; font-size: 28px; color: #333; }
