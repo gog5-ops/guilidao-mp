@@ -46,7 +46,7 @@ export default function OrderHistory() {
 
   function handleOrderClick(order: SupplierOrder) {
     Taro.navigateTo({
-      url: `/pages/tour/detail/index?id=${order.tourId}`,
+      url: `/pages/supplier/detail/index?id=${order._id}`,
     });
   }
 

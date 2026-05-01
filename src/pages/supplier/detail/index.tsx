@@ -38,10 +38,21 @@ export default function SupplierDetail() {
     setSupplierOrder(so);
     if (!so) return;
 
-    // Load white slip (first whiteSlipId is the WhiteSlip document)
+    // Load all white slips and merge their entries
     if (so.whiteSlipIds.length > 0) {
-      const slip = await getWhiteSlip(so.whiteSlipIds[0]);
-      setWhiteSlip(slip);
+      const slipPromises = so.whiteSlipIds.map((id) => getWhiteSlip(id));
+      const slips = await Promise.all(slipPromises);
+      const validSlips = slips.filter((s): s is WhiteSlip => s !== null);
+      if (validSlips.length > 0) {
+        // Merge entries from all white slips into a single virtual WhiteSlip
+        const merged: WhiteSlip = {
+          ...validSlips[0],
+          entries: validSlips.flatMap((s) => s.entries),
+          totalAmount: validSlips.reduce((sum, s) => sum + s.totalAmount, 0),
+          totalQuantity: validSlips.reduce((sum, s) => sum + s.totalQuantity, 0),
+        };
+        setWhiteSlip(merged);
+      }
     }
 
     // Load guide info

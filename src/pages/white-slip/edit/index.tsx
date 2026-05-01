@@ -10,6 +10,10 @@ import {
   createWhiteSlip,
   updateWhiteSlip,
 } from "../../../services/white-slip";
+import {
+  getSupplierOrderByTour,
+  updateSupplierOrderTotals,
+} from "../../../services/supplier-order";
 import type {
   GuestEntry,
   OrderItem,
@@ -358,12 +362,35 @@ export default function WhiteSlipEdit() {
   async function handleSave() {
     if (!user) return;
 
-    // Validate: each guest must have at least one product with qty > 0
+    // Validate default address
+    if (!defaultAddress.trim()) {
+      Taro.showToast({ title: "请填写默认送货地址", icon: "none", duration: 3000 });
+      return;
+    }
+
+    // Validate each guest
     for (const guest of guests) {
+      // Guest number must not be empty
+      if (!guest.guestNo.trim()) {
+        Taro.showToast({ title: "游客编号不能为空", icon: "none", duration: 3000 });
+        return;
+      }
+
+      // Each guest must have at least one product with qty > 0
       const itemCount = guestItemCount(guest);
       if (itemCount <= 0) {
         Taro.showToast({
           title: `游客 ${guest.guestNo} 没有选择商品`,
+          icon: "none",
+          duration: 3000,
+        });
+        return;
+      }
+
+      // Express delivery must have an address
+      if (guest.deliveryMethod === "express" && !guest.deliveryAddress.trim()) {
+        Taro.showToast({
+          title: `游客 ${guest.guestNo} 的快递地址不能为空`,
           icon: "none",
           duration: 3000,
         });
@@ -399,6 +426,18 @@ export default function WhiteSlipEdit() {
           updatedAt: now,
         });
         setExistingSlipId(id);
+      }
+      // Sync supplier order if one exists for this tour
+      try {
+        const so = await getSupplierOrderByTour(tourId);
+        if (so && so.status !== "delivered") {
+          await updateSupplierOrderTotals(so._id, totalAmount, totalQuantity);
+          Taro.showToast({ title: "供货商订单已同步更新", icon: "success" });
+          setTimeout(() => Taro.navigateBack(), 800);
+          return;
+        }
+      } catch {
+        // Non-critical: supplier order sync failed, still saved white slip
       }
       Taro.showToast({ title: "保存成功", icon: "success" });
       setTimeout(() => Taro.navigateBack(), 500);

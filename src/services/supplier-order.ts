@@ -77,6 +77,16 @@ export async function getSupplierOrderByTour(
   return orders.length > 0 ? orders[0] : null;
 }
 
+export async function updateSupplierOrderTotals(
+  id: string,
+  totalAmount: number,
+  totalQuantity: number
+): Promise<void> {
+  await collection(Collections.SUPPLIER_ORDERS).doc(id).update({
+    data: { totalAmount, totalQuantity, updatedAt: new Date().toISOString() },
+  });
+}
+
 export async function deleteSupplierOrder(id: string): Promise<void> {
   await collection(Collections.SUPPLIER_ORDERS).doc(id).remove();
 }
