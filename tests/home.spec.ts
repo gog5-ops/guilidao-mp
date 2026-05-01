@@ -1,4 +1,8 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+
+function activePage(page: Page) {
+  return page.locator(".taro_page_show:not(.taro_page_shade)");
+}
 
 test.describe("首页", () => {
   test("页面加载成功", async ({ page }) => {
@@ -8,17 +12,25 @@ test.describe("首页", () => {
 
   test("显示品牌名称", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("text=桂礼道")).toBeVisible();
+    await expect(activePage(page).locator(".brand-title")).toBeVisible({
+      timeout: 10000,
+    });
   });
 
-  test("显示角色选择按钮", async ({ page }) => {
+  test("显示登录注册Tab", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("text=我是导游")).toBeVisible();
-    await expect(page.locator("text=我是供货商")).toBeVisible();
+    await expect(
+      activePage(page).locator(".auth-tab").filter({ hasText: "登录" })
+    ).toBeVisible({ timeout: 10000 });
+    await expect(
+      activePage(page).locator(".auth-tab").filter({ hasText: "注册" })
+    ).toBeVisible();
   });
 
-  test("显示身份选择提示", async ({ page }) => {
+  test("显示手机号输入框", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("text=请选择您的身份")).toBeVisible();
+    await expect(
+      page.locator('input[placeholder="请输入手机号"]')
+    ).toBeVisible({ timeout: 10000 });
   });
 });
