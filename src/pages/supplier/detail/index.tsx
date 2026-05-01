@@ -2,9 +2,14 @@ import { useEffect, useState } from "react";
 import { View, Text, Button, Input } from "@tarojs/components";
 import Taro, { useRouter } from "@tarojs/taro";
 import { useAppStore } from "../../../store";
-import { getOrder, updateOrderStatus, addOrderNote, getOrderNotes } from "../../../services/order";
+import { getOrder, addOrderNote, getOrderNotes } from "../../../services/order";
+import {
+  getSupplierOrder,
+  updateSupplierOrderStatus,
+  updateTrackingNumber,
+} from "../../../services/supplier-order";
 import { getUserById } from "../../../services/user";
-import type { Order, OrderNote, User } from "../../../types";
+import type { SupplierOrder, Order, OrderNote, User } from "../../../types";
 import { ORDER_STATUS_MAP, DELIVERY_METHOD_MAP } from "../../../types";
 import "./index.css";
 
@@ -13,27 +18,40 @@ export default function SupplierDetail() {
   const orderId = router.params.id || "";
   const { user } = useAppStore();
 
-  const [order, setOrder] = useState<Order | null>(null);
+  const [supplierOrder, setSupplierOrder] = useState<SupplierOrder | null>(null);
+  const [whiteSlips, setWhiteSlips] = useState<Order[]>([]);
   const [guide, setGuide] = useState<User | null>(null);
   const [notes, setNotes] = useState<OrderNote[]>([]);
   const [noteText, setNoteText] = useState("");
   const [rejectReason, setRejectReason] = useState("");
   const [showReject, setShowReject] = useState(false);
+  const [trackingNo, setTrackingNo] = useState("");
 
   useEffect(() => {
     loadData();
   }, []);
 
   async function loadData() {
-    const [orderData, notesData] = await Promise.all([
-      getOrder(orderId),
-      getOrderNotes(orderId),
-    ]);
-    setOrder(orderData);
+    const so = await getSupplierOrder(orderId);
+    setSupplierOrder(so);
+    if (!so) return;
+
+    // Load all white slips
+    const slips = await Promise.all(
+      so.whiteSlipIds.map((id) => getOrder(id))
+    );
+    setWhiteSlips(slips.filter((s): s is Order => s !== null));
+
+    // Load guide info
+    const guideData = await getUserById(so.guideId);
+    setGuide(guideData);
+
+    // Load notes (use supplier order ID)
+    const notesData = await getOrderNotes(orderId);
     setNotes(notesData);
-    if (orderData?.guideId) {
-      const guideData = await getUserById(orderData.guideId);
-      setGuide(guideData);
+
+    if (so.trackingNumber) {
+      setTrackingNo(so.trackingNumber);
     }
   }
 
@@ -43,7 +61,7 @@ export default function SupplierDetail() {
       content: "确认接受此订单？",
     });
     if (!result.confirm) return;
-    await updateOrderStatus(orderId, "confirmed");
+    await updateSupplierOrderStatus(orderId, "confirmed");
     loadData();
     Taro.showToast({ title: "已接单", icon: "success" });
   }
@@ -53,7 +71,7 @@ export default function SupplierDetail() {
       Taro.showToast({ title: "请填写拒单原因", icon: "none" });
       return;
     }
-    await updateOrderStatus(orderId, "rejected");
+    await updateSupplierOrderStatus(orderId, "rejected");
     if (user) {
       await addOrderNote({
         orderId,
@@ -75,9 +93,18 @@ export default function SupplierDetail() {
       content: "确认已发出商品？",
     });
     if (!result.confirm) return;
-    await updateOrderStatus(orderId, "shipping");
+    await updateSupplierOrderStatus(orderId, "shipping");
     loadData();
     Taro.showToast({ title: "已标记发货", icon: "success" });
+  }
+
+  async function handleSaveTracking() {
+    if (!trackingNo.trim()) {
+      Taro.showToast({ title: "请输入快递单号", icon: "none" });
+      return;
+    }
+    await updateTrackingNumber(orderId, trackingNo.trim());
+    Taro.showToast({ title: "已保存快递单号", icon: "success" });
   }
 
   async function handleSendNote() {
@@ -95,7 +122,7 @@ export default function SupplierDetail() {
     setNotes(updated);
   }
 
-  if (!order) {
+  if (!supplierOrder) {
     return (
       <View className="page-center">
         <Text>加载中...</Text>
@@ -103,28 +130,49 @@ export default function SupplierDetail() {
     );
   }
 
+  // Group white slips by guest number
+  const guestGroups: Record<string, Order[]> = {};
+  for (const slip of whiteSlips) {
+    const gn = slip.guestNo || "未编号";
+    if (!guestGroups[gn]) guestGroups[gn] = [];
+    guestGroups[gn].push(slip);
+  }
+  const guestKeys = Object.keys(guestGroups).sort();
+
+  const aggQuantity = whiteSlips.reduce(
+    (sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0),
+    0
+  );
+
+  const hasExpressSlips = whiteSlips.some((s) => s.deliveryMethod === "express");
+
   return (
     <View className="page">
       <View className="status-banner">
-        <Text className={`status-text status-${order.status}`}>
-          {ORDER_STATUS_MAP[order.status]}
+        <Text className={`status-text status-${supplierOrder.status}`}>
+          {ORDER_STATUS_MAP[supplierOrder.status]}
         </Text>
-        <Text className="order-no">白单 #{order.orderNo}</Text>
+        <Text className="order-no">团次 {supplierOrder.tourCode}</Text>
       </View>
 
+      {/* Tour info */}
       <View className="card">
-        <Text className="card-title">商品清单</Text>
-        {order.items.map((item) => (
-          <View key={item.productId} className="item-row">
-            <Text className="item-name">{item.productName}</Text>
-            <Text className="item-qty">×{item.quantity}套</Text>
-          </View>
-        ))}
-        <View className="item-total">
-          <Text>合计：{order.items.reduce((s, i) => s + i.quantity, 0)}套</Text>
+        <Text className="card-title">团次信息</Text>
+        <View className="info-row">
+          <Text className="info-label">团号</Text>
+          <Text>{supplierOrder.tourCode}</Text>
+        </View>
+        <View className="info-row">
+          <Text className="info-label">日期</Text>
+          <Text>{supplierOrder.tourDate}</Text>
+        </View>
+        <View className="info-row">
+          <Text className="info-label">白单数</Text>
+          <Text>{supplierOrder.whiteSlipIds.length}张</Text>
         </View>
       </View>
 
+      {/* Guide info */}
       {guide && (
         <View className="card">
           <Text className="card-title">导游信息</Text>
@@ -154,31 +202,53 @@ export default function SupplierDetail() {
         </View>
       )}
 
+      {/* White slips grouped by guest */}
       <View className="card">
-        <Text className="card-title">配送信息</Text>
-        <View className="info-row">
-          <Text className="info-label">方式</Text>
-          <Text>{DELIVERY_METHOD_MAP[order.deliveryMethod]}</Text>
-        </View>
-        <View className="info-row">
-          <Text className="info-label">地址</Text>
-          <Text>{order.deliveryAddress}</Text>
-        </View>
-        {order.deliveryTime && (
-          <View className="info-row">
-            <Text className="info-label">时间</Text>
-            <Text>{order.deliveryTime}</Text>
+        <Text className="card-title">白单明细（按游客分组）</Text>
+        {guestKeys.map((gn) => (
+          <View key={gn} className="guest-group">
+            <Text className="guest-header">游客 {gn}</Text>
+            {guestGroups[gn].map((slip) => (
+              <View key={slip._id} className="slip-block">
+                {slip.items.map((item) => (
+                  <View key={item.productId} className="item-row">
+                    <Text className="item-name">{item.productName}</Text>
+                    <Text className="item-qty">x{item.quantity}套</Text>
+                  </View>
+                ))}
+                <View className="slip-delivery">
+                  <Text className="delivery-label">{DELIVERY_METHOD_MAP[slip.deliveryMethod]}</Text>
+                  {slip.deliveryMethod === "express" && slip.deliveryAddress && (
+                    <Text className="delivery-addr">{slip.deliveryAddress}</Text>
+                  )}
+                </View>
+              </View>
+            ))}
           </View>
-        )}
-        {order.remark && (
-          <View className="info-row">
-            <Text className="info-label">备注</Text>
-            <Text>{order.remark}</Text>
-          </View>
-        )}
+        ))}
+        <View className="item-total">
+          <Text>合计：{aggQuantity}套</Text>
+        </View>
       </View>
 
-      {order.status === "pending" && (
+      {/* Tracking number for express orders when confirmed */}
+      {supplierOrder.status === "confirmed" && hasExpressSlips && (
+        <View className="card">
+          <Text className="card-title">快递单号</Text>
+          <Input
+            className="input"
+            value={trackingNo}
+            onInput={(e) => setTrackingNo(e.detail.value)}
+            placeholder="请输入快递单号"
+          />
+          <Button className="btn-save-tracking" onClick={handleSaveTracking}>
+            保存
+          </Button>
+        </View>
+      )}
+
+      {/* Action buttons */}
+      {supplierOrder.status === "pending" && (
         <View className="action-group">
           <Button className="btn-accept" onClick={handleAccept}>
             接单
@@ -204,12 +274,13 @@ export default function SupplierDetail() {
         </View>
       )}
 
-      {order.status === "confirmed" && (
+      {supplierOrder.status === "confirmed" && (
         <Button className="btn-ship" onClick={handleShip}>
           标记已发货
         </Button>
       )}
 
+      {/* Notes */}
       <View className="card">
         <Text className="card-title">备注留言 ({notes.length})</Text>
         {notes.map((note) => (

@@ -3,6 +3,8 @@ import { View, Text, Button } from "@tarojs/components";
 import Taro, { useRouter, useDidShow } from "@tarojs/taro";
 import { getTour, updateTourStatus } from "../../../services/tour";
 import { getOrdersByTour, updateOrderStatus } from "../../../services/order";
+import { createSupplierOrder } from "../../../services/supplier-order";
+import { getUserById } from "../../../services/user";
 import type { Tour, Order } from "../../../types";
 import { ORDER_STATUS_MAP, DELIVERY_METHOD_MAP } from "../../../types";
 import "./index.css";
@@ -62,6 +64,33 @@ export default function TourDetail() {
         orders.map((order) => updateOrderStatus(order._id, "pending"))
       );
       await updateTourStatus(tourId, "submitted");
+
+      // Create a SupplierOrder aggregating all white slips
+      if (tour) {
+        const guide = await getUserById(tour.guideId);
+        const totalQuantity = orders.reduce(
+          (sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0),
+          0
+        );
+        const totalAmount = orders.reduce((sum, o) => sum + o.totalAmount, 0);
+        const now = new Date().toISOString();
+        await createSupplierOrder({
+          tourId: tour._id,
+          tourCode: tour.tourCode,
+          tourDate: tour.date,
+          guideId: tour.guideId,
+          guideName: guide?.name || "",
+          guidePhone: guide?.phone || "",
+          supplierId: "",
+          status: "pending",
+          whiteSlipIds: orders.map((o) => o._id),
+          totalQuantity,
+          totalAmount,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+
       setShowConfirm(false);
       Taro.showToast({ title: "提交成功", icon: "success" });
       await loadData();

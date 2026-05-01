@@ -11,10 +11,12 @@
 .order-card { background: #fff; margin: 16px 24px; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
 .order-header { display: flex; justify-content: space-between; margin-bottom: 12px; }
 .order-no { font-size: 30px; font-weight: bold; color: #333; }
-.order-time { font-size: 24px; color: #ccc; }
-.order-items { display: block; font-size: 24px; color: #666; margin-bottom: 12px; }
-.order-footer { display: flex; justify-content: space-between; }
-.delivery { font-size: 24px; color: #999; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.order-time { font-size: 24px; color: #999; }
+.order-meta { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 26px; }
+.guide-name { color: #666; }
+.slip-count { color: #8B5E3C; }
+.order-footer { display: flex; justify-content: space-between; align-items: center; }
+.status-tag { font-size: 24px; color: #999; padding: 4px 12px; background: #f5f5f5; border-radius: 4px; }
 .amount { font-size: 28px; font-weight: bold; color: #8B5E3C; }
 
 .empty { text-align: center; padding: 80px 0; color: #ccc; font-size: 28px; }

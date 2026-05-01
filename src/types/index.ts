@@ -71,6 +71,7 @@ export interface Order {
   tourId: string;
   guideId: string;
   supplierId: string;
+  guestNo?: string;
   status: OrderStatus;
   deliveryMethod: DeliveryMethod;
   deliveryLocationId?: string;
@@ -79,6 +80,24 @@ export interface Order {
   totalAmount: number;
   remark?: string;
   items: OrderItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SupplierOrder {
+  _id: string;
+  tourId: string;
+  tourCode: string;
+  tourDate: string;
+  guideId: string;
+  guideName: string;
+  guidePhone: string;
+  supplierId: string;
+  status: OrderStatus;
+  whiteSlipIds: string[];
+  totalQuantity: number;
+  totalAmount: number;
+  trackingNumber?: string;
   createdAt: string;
   updatedAt: string;
 }

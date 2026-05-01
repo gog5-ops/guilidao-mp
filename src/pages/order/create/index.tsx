@@ -11,7 +11,7 @@ import {
   createDeliveryLocation,
   incrementUsageCount,
 } from "../../../services/delivery-location";
-import type { Product, DeliveryMethod, DeliveryLocation, OrderItem, RedSlip, RedSlipItem } from "../../../types";
+import type { Product, DeliveryMethod, DeliveryLocation, OrderItem, RedSlipItem } from "../../../types";
 import { DELIVERY_METHOD_MAP } from "../../../types";
 import "./index.css";
 
@@ -23,6 +23,15 @@ interface DisplayProduct {
   price: number; // cents, from red slip or product table
 }
 
+interface CustomItem {
+  id: string;
+  name: string;
+  price: number; // cents
+  quantity: number;
+}
+
+let customIdCounter = 0;
+
 export default function OrderCreate() {
   const router = useRouter();
   const tourId = router.params.tourId || "";
@@ -31,6 +40,8 @@ export default function OrderCreate() {
   const [displayProducts, setDisplayProducts] = useState<DisplayProduct[]>([]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [editPrices, setEditPrices] = useState<Record<string, number>>({});
+  const [guestNo, setGuestNo] = useState("");
+  const [customItems, setCustomItems] = useState<CustomItem[]>([]);
   const [remark, setRemark] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("delivery");
   const [deliveryAddress, setDeliveryAddress] = useState("");
@@ -106,19 +117,63 @@ export default function OrderCreate() {
     }
   }
 
-  function totalSets() {
-    return Object.values(quantities).reduce((sum, q) => sum + q, 0);
+  function addCustomItem() {
+    customIdCounter += 1;
+    setCustomItems((prev) => [
+      ...prev,
+      { id: `custom_${customIdCounter}`, name: "", price: 0, quantity: 1 },
+    ]);
   }
 
-  function totalAmount() {
-    return displayProducts.reduce(
-      (sum, p) => sum + (quantities[p._id] || 0) * (editPrices[p._id] || p.price),
-      0
+  function updateCustomItem(id: string, field: keyof CustomItem, value: string | number) {
+    setCustomItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
     );
   }
 
+  function updateCustomItemPrice(id: string, yuanStr: string) {
+    const yuan = parseFloat(yuanStr);
+    if (!isNaN(yuan)) {
+      updateCustomItem(id, "price", Math.round(yuan * 100));
+    } else if (yuanStr === "") {
+      updateCustomItem(id, "price", 0);
+    }
+  }
+
+  function updateCustomItemQuantity(id: string, delta: number) {
+    setCustomItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
+          : item
+      )
+    );
+  }
+
+  function removeCustomItem(id: string) {
+    setCustomItems((prev) => prev.filter((item) => item.id !== id));
+  }
+
+  function totalSets() {
+    const productQty = Object.values(quantities).reduce((sum, q) => sum + q, 0);
+    const customQty = customItems.reduce((sum, c) => sum + c.quantity, 0);
+    return productQty + customQty;
+  }
+
+  function totalAmount() {
+    const productTotal = displayProducts.reduce(
+      (sum, p) => sum + (quantities[p._id] || 0) * (editPrices[p._id] || p.price),
+      0
+    );
+    const customTotal = customItems.reduce(
+      (sum, c) => sum + c.price * c.quantity,
+      0
+    );
+    return productTotal + customTotal;
+  }
+
   function buildItems(): OrderItem[] {
-    return displayProducts
+    const productItems = displayProducts
       .filter((p) => (quantities[p._id] || 0) > 0)
       .map((p) => {
         const qty = quantities[p._id];
@@ -131,6 +186,16 @@ export default function OrderCreate() {
           subtotal: qty * price,
         };
       });
+    const customOrderItems = customItems
+      .filter((c) => c.name.trim() && c.quantity > 0)
+      .map((c) => ({
+        productId: c.id,
+        productName: c.name,
+        quantity: c.quantity,
+        unitPrice: c.price,
+        subtotal: c.price * c.quantity,
+      }));
+    return [...productItems, ...customOrderItems];
   }
 
   async function loadLocations() {
@@ -164,6 +229,10 @@ export default function OrderCreate() {
   }
 
   function handleNext() {
+    if (!guestNo.trim()) {
+      Taro.showToast({ title: "请填写游客编号", icon: "none" });
+      return;
+    }
     if (totalSets() === 0) {
       Taro.showToast({ title: "请至少选择一件商品", icon: "none" });
       return;
@@ -192,6 +261,7 @@ export default function OrderCreate() {
         tourId,
         guideId: user._id,
         supplierId: "",
+        guestNo: guestNo.trim(),
         status: "pending",
         deliveryMethod,
         deliveryAddress: deliveryAddress.trim(),
@@ -217,6 +287,17 @@ export default function OrderCreate() {
     return (
       <View className="page">
         <Text className="page-title">选择商品和数量</Text>
+
+        <View className="form-group" style={{ marginBottom: "20px" }}>
+          <Text className="label">游客编号 *</Text>
+          <Input
+            className="input"
+            value={guestNo}
+            onInput={(e) => setGuestNo(e.detail.value)}
+            placeholder="请输入游客编号，如 001"
+          />
+        </View>
+
         {redSlipName && (
           <Text className="red-slip-hint">红单：{redSlipName}</Text>
         )}
@@ -249,6 +330,46 @@ export default function OrderCreate() {
             </View>
           </View>
         ))}
+
+        <View className="custom-section">
+          <Text className="custom-section-title">自定义商品（优惠等）</Text>
+          {customItems.map((item) => (
+            <View key={item.id} className="custom-item-row">
+              <View className="custom-item-fields">
+                <Input
+                  className="custom-name-input"
+                  value={item.name}
+                  onInput={(e) => updateCustomItem(item.id, "name", e.detail.value)}
+                  placeholder="商品名称"
+                />
+                <View className="custom-price-row">
+                  <Input
+                    className="custom-price-input"
+                    type="digit"
+                    value={item.price ? (item.price / 100).toString() : ""}
+                    onInput={(e) => updateCustomItemPrice(item.id, e.detail.value)}
+                    placeholder="单价"
+                  />
+                  <Text className="price-yuan">元</Text>
+                </View>
+              </View>
+              <View className="qty-control">
+                <View className="qty-btn" onClick={() => updateCustomItemQuantity(item.id, -1)}>
+                  <Text>-</Text>
+                </View>
+                <Text className="qty-value">{item.quantity}</Text>
+                <View className="qty-btn" onClick={() => updateCustomItemQuantity(item.id, 1)}>
+                  <Text>+</Text>
+                </View>
+              </View>
+              <Text className="custom-remove" onClick={() => removeCustomItem(item.id)}>删除</Text>
+            </View>
+          ))}
+          <View className="custom-add-btn" onClick={addCustomItem}>
+            <Text>+ 添加</Text>
+          </View>
+        </View>
+
         <View className="summary-bar">
           <Text className="summary-text">
             合计：{totalSets()}套 / ¥{(totalAmount() / 100).toFixed(2)}

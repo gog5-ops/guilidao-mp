@@ -12,6 +12,7 @@ import type {
   OrderItem,
   DeliveryLocation,
   RedSlip,
+  SupplierOrder,
 } from "../types";
 
 const GUIDE_ID = "mock_user_guide";
@@ -94,6 +95,7 @@ const MOCK_ORDERS: Order[] = [
     tourId: "mock_tour_1",
     guideId: GUIDE_ID,
     supplierId: SUPPLIER_ID,
+    guestNo: "001",
     status: "confirmed",
     deliveryMethod: "delivery",
     deliveryLocationId: "mock_loc_1",
@@ -109,6 +111,7 @@ const MOCK_ORDERS: Order[] = [
     tourId: "mock_tour_1",
     guideId: GUIDE_ID,
     supplierId: SUPPLIER_ID,
+    guestNo: "002",
     status: "pending",
     deliveryMethod: "delivery",
     deliveryLocationId: "mock_loc_3",
@@ -124,6 +127,7 @@ const MOCK_ORDERS: Order[] = [
     tourId: "mock_tour_2",
     guideId: GUIDE_ID,
     supplierId: SUPPLIER_ID,
+    guestNo: "001",
     status: "pending",
     deliveryMethod: "delivery",
     deliveryLocationId: "mock_loc_2",
@@ -139,6 +143,7 @@ const MOCK_ORDERS: Order[] = [
     tourId: "mock_tour_2",
     guideId: GUIDE_ID,
     supplierId: SUPPLIER_ID,
+    guestNo: "002",
     status: "pending",
     deliveryMethod: "delivery",
     deliveryLocationId: "mock_loc_4",
@@ -154,6 +159,7 @@ const MOCK_ORDERS: Order[] = [
     tourId: "mock_tour_3",
     guideId: GUIDE_ID,
     supplierId: SUPPLIER_ID,
+    guestNo: "003",
     status: "delivered",
     deliveryMethod: "delivery",
     deliveryLocationId: "mock_loc_1",
@@ -232,6 +238,41 @@ const MOCK_DELIVERY_LOCATIONS: DeliveryLocation[] = [
   },
 ];
 
+const MOCK_SUPPLIER_ORDERS: SupplierOrder[] = [
+  {
+    _id: "mock_supplier_order_1",
+    tourId: "mock_tour_1",
+    tourCode: "GL20250420-01",
+    tourDate: "2025-04-20",
+    guideId: GUIDE_ID,
+    guideName: "李导游",
+    guidePhone: "13800001111",
+    supplierId: SUPPLIER_ID,
+    status: "confirmed",
+    whiteSlipIds: ["mock_order_1", "mock_order_2"],
+    totalQuantity: 5,
+    totalAmount: 60000,
+    createdAt: "2025-04-19T14:00:00.000Z",
+    updatedAt: "2025-04-19T15:00:00.000Z",
+  },
+  {
+    _id: "mock_supplier_order_2",
+    tourId: "mock_tour_3",
+    tourCode: "GL20250418-01",
+    tourDate: "2025-04-18",
+    guideId: GUIDE_ID,
+    guideName: "李导游",
+    guidePhone: "13800001111",
+    supplierId: SUPPLIER_ID,
+    status: "delivered",
+    whiteSlipIds: ["mock_order_5"],
+    totalQuantity: 2,
+    totalAmount: 24000,
+    createdAt: "2025-04-17T12:00:00.000Z",
+    updatedAt: "2025-04-18T15:00:00.000Z",
+  },
+];
+
 export function seedMockData(): void {
   // Users
   for (const u of MOCK_USERS) {
@@ -261,5 +302,10 @@ export function seedMockData(): void {
   // Red slips
   for (const rs of MOCK_RED_SLIPS) {
     seedRecord(Collections.RED_SLIPS, { ...rs });
+  }
+
+  // Supplier orders
+  for (const so of MOCK_SUPPLIER_ORDERS) {
+    seedRecord(Collections.SUPPLIER_ORDERS, { ...so });
   }
 }
