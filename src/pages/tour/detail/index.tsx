@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { View, Text, Button } from "@tarojs/components";
-import Taro, { useRouter } from "@tarojs/taro";
+import Taro, { useRouter, useDidShow } from "@tarojs/taro";
 import { getTour, updateTourStatus } from "../../../services/tour";
 import { getOrdersByTour, updateOrderStatus } from "../../../services/order";
 import type { Tour, Order } from "../../../types";
@@ -14,9 +14,9 @@ export default function TourDetail() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
+  useDidShow(() => {
     loadData();
-  }, []);
+  });
 
   async function loadData() {
     const [tourData, orderData] = await Promise.all([

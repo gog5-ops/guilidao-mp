@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, Text, Button } from "@tarojs/components";
-import Taro from "@tarojs/taro";
+import Taro, { useDidShow } from "@tarojs/taro";
 import { useAppStore } from "../../store";
 import { login, getUser, createUser } from "../../services/user";
 import { getToursByGuide } from "../../services/tour";
@@ -22,6 +22,12 @@ export default function Index() {
       loadTours();
     }
   }, [user]);
+
+  useDidShow(() => {
+    if (user?.role === "guide") {
+      loadTours();
+    }
+  });
 
   async function doLogin() {
     try {
