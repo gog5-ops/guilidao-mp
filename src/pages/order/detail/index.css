@@ -1,4 +1,6 @@
 .page { padding: 24px; min-height: 100vh; }
+.back-bar { padding: 16px 0; margin-bottom: 12px; }
+.back-arrow { font-size: 28px; color: #8B5E3C; }
 .page-center { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
 
 .status-banner { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; text-align: center; }
@@ -37,3 +39,4 @@
 .status-shipping { color: #2E7D32; }
 .status-delivered { color: #2E7D32; }
 .status-rejected { color: #C62828; }
+.status-partially_shipped { color: #F57F17; }

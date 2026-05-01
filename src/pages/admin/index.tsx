@@ -4,9 +4,14 @@ import Taro, { useDidShow } from "@tarojs/taro";
 import { useAppStore } from "../../store";
 import { getAllOrders } from "../../services/order";
 import { getAllTours } from "../../services/tour";
-import { getSupplierOrders } from "../../services/supplier-order";
-import type { Order, OrderStatus, Tour, SupplierOrder } from "../../types";
-import { ORDER_STATUS_MAP, DELIVERY_METHOD_MAP } from "../../types";
+import {
+  getSupplierOrders,
+  updateSupplierOrderStatus,
+  updateAfterSalesStatus,
+} from "../../services/supplier-order";
+import { updateOrderStatus } from "../../services/order";
+import type { Order, OrderStatus, Tour, SupplierOrder, AfterSalesStatus } from "../../types";
+import { ORDER_STATUS_MAP, DELIVERY_METHOD_MAP, AFTER_SALES_STATUS_MAP } from "../../types";
 import "./index.css";
 
 type StatusFilter = "all" | OrderStatus;
@@ -16,6 +21,7 @@ const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
   { key: "all", label: "全部" },
   { key: "pending", label: "待确认" },
   { key: "confirmed", label: "已确认" },
+  { key: "partially_shipped", label: "部分发货" },
   { key: "shipping", label: "配送中" },
   { key: "delivered", label: "已送达" },
   { key: "rejected", label: "已拒单" },
@@ -123,6 +129,43 @@ export default function AdminPage() {
     }
     return Array.from(uniqueGuides.entries()).map(([id, name]) => ({ id, name }));
   }, [orders, guideNameMap]);
+
+  const ALL_STATUSES: OrderStatus[] = [
+    "pending", "confirmed", "partially_shipped", "shipping", "delivered", "rejected",
+  ];
+
+  const AFTER_SALES_OPTIONS: AfterSalesStatus[] = [
+    "none", "requested", "processing", "resolved",
+  ];
+
+  async function handleChangeOrderStatus(orderId: string, newStatus: OrderStatus) {
+    await updateOrderStatus(orderId, newStatus);
+    await loadData();
+    Taro.showToast({ title: "状态已更新", icon: "success" });
+  }
+
+  async function handleChangeSupplierOrderStatus(soId: string, newStatus: OrderStatus) {
+    await updateSupplierOrderStatus(soId, newStatus);
+    await loadData();
+    Taro.showToast({ title: "供货商订单状态已更新", icon: "success" });
+  }
+
+  async function handleAdminConfirmReceive(orderId: string) {
+    const result = await Taro.showModal({
+      title: "代导游确认收货",
+      content: "确认代替导游标记已收货？",
+    });
+    if (!result.confirm) return;
+    await updateOrderStatus(orderId, "delivered");
+    await loadData();
+    Taro.showToast({ title: "已确认收货", icon: "success" });
+  }
+
+  async function handleChangeAfterSales(soId: string, newStatus: AfterSalesStatus) {
+    await updateAfterSalesStatus(soId, newStatus);
+    await loadData();
+    Taro.showToast({ title: "售后状态已更新", icon: "success" });
+  }
 
   function handleQuickDate(preset: string) {
     const range = getQuickDateRange(preset);
@@ -426,27 +469,96 @@ export default function AdminPage() {
         {filteredOrders.length === 0 ? (
           <View className="empty"><Text>暂无订单</Text></View>
         ) : (
-          filteredOrders.map((order) => (
-            <View key={order._id} className="order-card">
-              <View className="order-header">
-                <Text className="order-no">#{order.orderNo}</Text>
-                <Text className={`order-status status-${order.status}`}>
-                  {ORDER_STATUS_MAP[order.status]}
+          filteredOrders.map((order) => {
+            // Find associated supplier order
+            const relatedSO = supplierOrders.find(
+              (so) => so.guideId === order.guideId && so.tourId === order.tourId
+            );
+            const afterSales = relatedSO?.afterSalesStatus || "none";
+            return (
+              <View key={order._id} className="order-card">
+                <View className="order-header">
+                  <Text className="order-no">#{order.orderNo}</Text>
+                  <Text className={`order-status status-${order.status}`}>
+                    {ORDER_STATUS_MAP[order.status]}
+                  </Text>
+                </View>
+                <Text className="order-info">
+                  导游: {guideNameMap.get(order.guideId) || order.guideId}
                 </Text>
+                <View className="order-footer">
+                  <Text className="order-date">
+                    {new Date(order.createdAt).toLocaleDateString("zh-CN")}
+                  </Text>
+                  <Text className="order-amount">
+                    ¥{(order.totalAmount / 100).toFixed(0)}
+                  </Text>
+                </View>
+
+                {/* After-sales status display */}
+                {afterSales !== "none" && (
+                  <View style={{ marginTop: "8px", padding: "6px 12px", background: "#FFF3E0", borderRadius: "6px" }}>
+                    <Text style={{ fontSize: "22px", color: "#E65100" }}>
+                      售后: {AFTER_SALES_STATUS_MAP[afterSales]}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Admin controls */}
+                <View style={{ marginTop: "12px", borderTop: "1px solid #eee", paddingTop: "12px" }}>
+                  {/* Status change picker */}
+                  <Picker
+                    mode="selector"
+                    range={ALL_STATUSES.map((s) => ORDER_STATUS_MAP[s])}
+                    value={ALL_STATUSES.indexOf(order.status)}
+                    onChange={(e) => {
+                      const newStatus = ALL_STATUSES[Number(e.detail.value)];
+                      if (newStatus !== order.status) {
+                        handleChangeOrderStatus(order._id, newStatus);
+                        if (relatedSO) {
+                          handleChangeSupplierOrderStatus(relatedSO._id, newStatus);
+                        }
+                      }
+                    }}
+                  >
+                    <View className="admin-action-row">
+                      <Text className="admin-action-btn">修改状态</Text>
+                    </View>
+                  </Picker>
+
+                  {/* Confirm receive for guide */}
+                  {order.status === "shipping" && (
+                    <Text
+                      className="admin-action-btn"
+                      style={{ marginTop: "8px", display: "block", color: "#2E7D32" }}
+                      onClick={() => handleAdminConfirmReceive(order._id)}
+                    >
+                      代导游确认收货
+                    </Text>
+                  )}
+
+                  {/* After-sales management */}
+                  {relatedSO && (
+                    <Picker
+                      mode="selector"
+                      range={AFTER_SALES_OPTIONS.map((s) => AFTER_SALES_STATUS_MAP[s])}
+                      value={AFTER_SALES_OPTIONS.indexOf(afterSales)}
+                      onChange={(e) => {
+                        const newAS = AFTER_SALES_OPTIONS[Number(e.detail.value)];
+                        if (newAS !== afterSales) {
+                          handleChangeAfterSales(relatedSO._id, newAS);
+                        }
+                      }}
+                    >
+                      <View className="admin-action-row" style={{ marginTop: "8px" }}>
+                        <Text className="admin-action-btn">售后管理</Text>
+                      </View>
+                    </Picker>
+                  )}
+                </View>
               </View>
-              <Text className="order-info">
-                导游: {guideNameMap.get(order.guideId) || order.guideId}
-              </Text>
-              <View className="order-footer">
-                <Text className="order-date">
-                  {new Date(order.createdAt).toLocaleDateString("zh-CN")}
-                </Text>
-                <Text className="order-amount">
-                  ¥{(order.totalAmount / 100).toFixed(0)}
-                </Text>
-              </View>
-            </View>
-          ))
+            );
+          })
         )}
       </View>
     </View>

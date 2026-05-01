@@ -356,6 +356,26 @@
   color: #999;
 }
 
+/* Admin action controls */
+.admin-action-row {
+  display: inline-block;
+}
+
+.admin-action-btn {
+  display: inline-block;
+  font-size: 24px;
+  color: #8B5E3C;
+  padding: 6px 16px;
+  border: 1px solid #8B5E3C;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.status-partially_shipped {
+  background: #FFF8E1;
+  color: #F57F17;
+}
+
 .empty {
   text-align: center;
   padding: 60px 0;

@@ -7,11 +7,12 @@ import {
   getSupplierOrder,
   updateSupplierOrderStatus,
   updateTrackingNumber,
+  updateAfterSalesStatus,
 } from "../../../services/supplier-order";
 import { getWhiteSlip } from "../../../services/white-slip";
 import { getUserById } from "../../../services/user";
 import type { SupplierOrder, WhiteSlip, GuestEntry, OrderNote, User } from "../../../types";
-import { ORDER_STATUS_MAP, DELIVERY_METHOD_MAP } from "../../../types";
+import { ORDER_STATUS_MAP, DELIVERY_METHOD_MAP, AFTER_SALES_STATUS_MAP } from "../../../types";
 import "./index.css";
 
 export default function SupplierDetail() {
@@ -90,13 +91,35 @@ export default function SupplierDetail() {
 
   async function handleShip() {
     const result = await Taro.showModal({
-      title: "标记发货",
-      content: "确认已发出商品？",
+      title: "标记全部发货",
+      content: "确认所有商品已全部发出？",
     });
     if (!result.confirm) return;
     await updateSupplierOrderStatus(orderId, "shipping");
     loadData();
-    Taro.showToast({ title: "已标记发货", icon: "success" });
+    Taro.showToast({ title: "已标记全部发货", icon: "success" });
+  }
+
+  async function handlePartialShip() {
+    const result = await Taro.showModal({
+      title: "标记部分发货",
+      content: "送货部分已发出，快递部分尚未发出？",
+    });
+    if (!result.confirm) return;
+    await updateSupplierOrderStatus(orderId, "partially_shipped");
+    loadData();
+    Taro.showToast({ title: "已标记部分发货", icon: "success" });
+  }
+
+  async function handleRequestAfterSales() {
+    const result = await Taro.showModal({
+      title: "申请售后",
+      content: "确认申请售后服务？",
+    });
+    if (!result.confirm) return;
+    await updateAfterSalesStatus(orderId, "requested");
+    loadData();
+    Taro.showToast({ title: "售后申请已提交", icon: "success" });
   }
 
   async function handleSaveTracking() {
@@ -267,9 +290,62 @@ export default function SupplierDetail() {
       )}
 
       {supplierOrder.status === "confirmed" && (
+        <View style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
+          <Button className="btn-ship" style={{ flex: 1, marginBottom: 0 }} onClick={handleShip}>
+            标记全部发货
+          </Button>
+          {hasExpressEntries && (
+            <Button
+              style={{
+                flex: 1,
+                background: "#F57F17",
+                color: "#fff",
+                border: "none",
+                borderRadius: "12px",
+                fontSize: "28px",
+                padding: "24px 0",
+              }}
+              onClick={handlePartialShip}
+            >
+              标记部分发货
+            </Button>
+          )}
+        </View>
+      )}
+
+      {/* Partial shipped: allow marking full shipment */}
+      {supplierOrder.status === "partially_shipped" && (
         <Button className="btn-ship" onClick={handleShip}>
-          标记已发货
+          标记全部发货
         </Button>
+      )}
+
+      {/* After-sales button: visible when delivered */}
+      {supplierOrder.status === "delivered" && (
+        <View className="card">
+          <Text className="card-title">售后服务</Text>
+          {(!supplierOrder.afterSalesStatus || supplierOrder.afterSalesStatus === "none") ? (
+            <Button
+              style={{
+                background: "#E65100",
+                color: "#fff",
+                border: "none",
+                borderRadius: "8px",
+                fontSize: "28px",
+                padding: "16px 0",
+              }}
+              onClick={handleRequestAfterSales}
+            >
+              申请售后
+            </Button>
+          ) : (
+            <View style={{ padding: "12px", background: "#FFF3E0", borderRadius: "8px" }}>
+              <Text style={{ fontSize: "28px", color: "#E65100" }}>
+                售后状态: {AFTER_SALES_STATUS_MAP[supplierOrder.afterSalesStatus]}
+              </Text>
+            </View>
+          )}
+        </View>
       )}
 
       {/* Notes */}

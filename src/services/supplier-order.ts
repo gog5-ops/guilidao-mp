@@ -1,5 +1,5 @@
 import { collection, Collections } from "./db";
-import type { SupplierOrder, OrderStatus } from "../types";
+import type { SupplierOrder, OrderStatus, AfterSalesStatus } from "../types";
 
 export async function createSupplierOrder(
   order: Omit<SupplierOrder, "_id">
@@ -56,4 +56,27 @@ export async function updateTrackingNumber(
   await collection(Collections.SUPPLIER_ORDERS).doc(id).update({
     data: { trackingNumber, updatedAt: new Date().toISOString() },
   });
+}
+
+export async function updateAfterSalesStatus(
+  id: string,
+  afterSalesStatus: AfterSalesStatus
+): Promise<void> {
+  await collection(Collections.SUPPLIER_ORDERS).doc(id).update({
+    data: { afterSalesStatus, updatedAt: new Date().toISOString() },
+  });
+}
+
+export async function getSupplierOrderByTour(
+  tourId: string
+): Promise<SupplierOrder | null> {
+  const { data } = await collection(Collections.SUPPLIER_ORDERS)
+    .where({ tourId })
+    .get();
+  const orders = data as unknown as SupplierOrder[];
+  return orders.length > 0 ? orders[0] : null;
+}
+
+export async function deleteSupplierOrder(id: string): Promise<void> {
+  await collection(Collections.SUPPLIER_ORDERS).doc(id).remove();
 }

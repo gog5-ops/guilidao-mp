@@ -3,8 +3,9 @@ import { View, Text, Button, Input } from "@tarojs/components";
 import Taro, { useRouter } from "@tarojs/taro";
 import { useAppStore } from "../../../store";
 import { getOrder, updateOrderStatus, addOrderNote, getOrderNotes } from "../../../services/order";
-import type { Order, OrderNote } from "../../../types";
-import { ORDER_STATUS_MAP, DELIVERY_METHOD_MAP } from "../../../types";
+import { getSupplierOrderByTour } from "../../../services/supplier-order";
+import type { Order, OrderNote, SupplierOrder } from "../../../types";
+import { ORDER_STATUS_MAP, DELIVERY_METHOD_MAP, AFTER_SALES_STATUS_MAP } from "../../../types";
 import "./index.css";
 
 export default function OrderDetail() {
@@ -13,6 +14,7 @@ export default function OrderDetail() {
   const { user } = useAppStore();
 
   const [order, setOrder] = useState<Order | null>(null);
+  const [supplierOrder, setSupplierOrder] = useState<SupplierOrder | null>(null);
   const [notes, setNotes] = useState<OrderNote[]>([]);
   const [noteText, setNoteText] = useState("");
 
@@ -27,6 +29,12 @@ export default function OrderDetail() {
     ]);
     setOrder(orderData);
     setNotes(notesData);
+
+    // Load associated supplier order for tracking info
+    if (orderData?.tourId) {
+      const so = await getSupplierOrderByTour(orderData.tourId);
+      setSupplierOrder(so);
+    }
   }
 
   async function handleConfirmReceive() {
@@ -74,6 +82,9 @@ export default function OrderDetail() {
 
   return (
     <View className="page">
+      <View className="back-bar" onClick={() => Taro.navigateBack()}>
+        <Text className="back-arrow">&larr; 返回</Text>
+      </View>
       <View className="status-banner">
         <Text className={`status-text status-${order.status}`}>
           {ORDER_STATUS_MAP[order.status]}
@@ -123,7 +134,25 @@ export default function OrderDetail() {
             <Text>{order.remark}</Text>
           </View>
         )}
+        {supplierOrder?.trackingNumber && (
+          <View className="info-row">
+            <Text className="info-label">快递单号</Text>
+            <Text style={{ color: "#8B5E3C", fontWeight: "bold" }}>{supplierOrder.trackingNumber}</Text>
+          </View>
+        )}
       </View>
+
+      {/* After-sales status */}
+      {supplierOrder?.afterSalesStatus && supplierOrder.afterSalesStatus !== "none" && (
+        <View className="card">
+          <Text className="card-title">售后状态</Text>
+          <View style={{ padding: "12px", background: "#FFF3E0", borderRadius: "8px" }}>
+            <Text style={{ fontSize: "28px", color: "#E65100" }}>
+              {AFTER_SALES_STATUS_MAP[supplierOrder.afterSalesStatus]}
+            </Text>
+          </View>
+        </View>
+      )}
 
       {canReceive && (
         <Button className="btn-receive" onClick={handleConfirmReceive}>

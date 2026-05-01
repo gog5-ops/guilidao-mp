@@ -5,9 +5,12 @@ export type TourStatus = "draft" | "submitted" | "completed" | "archived";
 export type OrderStatus =
   | "pending"
   | "confirmed"
+  | "partially_shipped"
   | "shipping"
   | "delivered"
   | "rejected";
+
+export type AfterSalesStatus = "none" | "requested" | "processing" | "resolved";
 
 export type DeliveryMethod = "delivery" | "express";
 
@@ -98,6 +101,7 @@ export interface SupplierOrder {
   totalQuantity: number;
   totalAmount: number;
   trackingNumber?: string;
+  afterSalesStatus?: AfterSalesStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -161,9 +165,17 @@ export const WHITE_SLIP_STATUS_MAP: Record<WhiteSlip['status'], string> = {
 export const ORDER_STATUS_MAP: Record<OrderStatus, string> = {
   pending: "待确认",
   confirmed: "已确认",
+  partially_shipped: "部分发货",
   shipping: "配送中",
   delivered: "已送达",
   rejected: "已拒单",
+};
+
+export const AFTER_SALES_STATUS_MAP: Record<AfterSalesStatus, string> = {
+  none: "无",
+  requested: "售后申请中",
+  processing: "售后处理中",
+  resolved: "售后已完成",
 };
 
 export const DELIVERY_METHOD_MAP: Record<DeliveryMethod, string> = {
