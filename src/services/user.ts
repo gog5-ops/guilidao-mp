@@ -3,6 +3,9 @@ import { collection, Collections } from "./db";
 import type { User, UserRole } from "../types";
 
 export async function login(): Promise<{ openId: string }> {
+  if (process.env.TARO_ENV === "h5") {
+    return { openId: "mock_openid_guide" };
+  }
   const { result } = await Taro.cloud.callFunction({ name: "login" });
   return result as { openId: string };
 }
