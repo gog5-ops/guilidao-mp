@@ -9,9 +9,9 @@ export type OrderStatus =
   | "delivered"
   | "rejected";
 
-export type DeliveryMethod = "hotel" | "pickup" | "express";
+export type DeliveryMethod = "delivery" | "express";
 
-export type DeliveryLocationType = "hotel" | "pickup_point";
+export type DeliveryLocationType = "delivery";
 
 export interface User {
   _id: string;
@@ -77,6 +77,7 @@ export interface Order {
   deliveryAddress?: string;
   deliveryTime: string;
   totalAmount: number;
+  remark?: string;
   items: OrderItem[];
   createdAt: string;
   updatedAt: string;
@@ -119,8 +120,7 @@ export const ORDER_STATUS_MAP: Record<OrderStatus, string> = {
 };
 
 export const DELIVERY_METHOD_MAP: Record<DeliveryMethod, string> = {
-  hotel: "酒店送货",
-  pickup: "景点自提",
+  delivery: "送货上门",
   express: "快递到家",
 };
 

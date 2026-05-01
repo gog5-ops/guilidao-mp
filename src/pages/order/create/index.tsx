@@ -31,7 +31,8 @@ export default function OrderCreate() {
   const [displayProducts, setDisplayProducts] = useState<DisplayProduct[]>([]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [editPrices, setEditPrices] = useState<Record<string, number>>({});
-  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("hotel");
+  const [remark, setRemark] = useState("");
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("delivery");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryTime, setDeliveryTime] = useState("");
   const [savedLocations, setSavedLocations] = useState<DeliveryLocation[]>([]);
@@ -133,9 +134,8 @@ export default function OrderCreate() {
   }
 
   async function loadLocations() {
-    const locType = deliveryMethod === "hotel" ? "hotel" : "pickup_point";
     if (deliveryMethod !== "express") {
-      const locs = await getDeliveryLocations(locType);
+      const locs = await getDeliveryLocations();
       setSavedLocations(locs);
     } else {
       setSavedLocations([]);
@@ -150,10 +150,9 @@ export default function OrderCreate() {
 
   async function handleSaveNewLocation() {
     if (!deliveryAddress.trim()) return;
-    const locType = deliveryMethod === "hotel" ? "hotel" as const : "pickup_point" as const;
     await createDeliveryLocation({
       name: deliveryAddress.trim(),
-      type: locType,
+      type: "delivery",
       address: "",
       contactPhone: "",
       isActive: true,
@@ -198,6 +197,7 @@ export default function OrderCreate() {
         deliveryAddress: deliveryAddress.trim(),
         deliveryTime: deliveryTime.trim(),
         totalAmount: totalAmount(),
+        remark: remark.trim() || undefined,
         items: buildItems(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -211,7 +211,7 @@ export default function OrderCreate() {
     }
   }
 
-  const deliveryMethods: DeliveryMethod[] = ["hotel", "pickup", "express"];
+  const deliveryMethods: DeliveryMethod[] = ["delivery", "express"];
 
   if (step === "products") {
     return (
@@ -275,9 +275,8 @@ export default function OrderCreate() {
                 setSelectedLocationId("");
                 setDeliveryAddress("");
                 setShowNewLocation(false);
-                const locType = m === "hotel" ? "hotel" as const : "pickup_point" as const;
                 if (m !== "express") {
-                  getDeliveryLocations(locType).then(setSavedLocations);
+                  getDeliveryLocations().then(setSavedLocations);
                 } else {
                   setSavedLocations([]);
                 }
@@ -318,11 +317,7 @@ export default function OrderCreate() {
         {(deliveryMethod === "express" || showNewLocation || savedLocations.length === 0) && (
           <View className="form-group">
             <Text className="label">
-              {deliveryMethod === "hotel"
-                ? "酒店名称 + 房间号"
-                : deliveryMethod === "pickup"
-                  ? "自提地点"
-                  : "收货地址"}
+              {deliveryMethod === "delivery" ? "送货地址" : "收货地址"}
             </Text>
             <Input
               className="input"
@@ -345,6 +340,16 @@ export default function OrderCreate() {
             value={deliveryTime}
             onInput={(e) => setDeliveryTime(e.detail.value)}
             placeholder="如：今天下午3点前"
+          />
+        </View>
+
+        <View className="form-group">
+          <Text className="label">备注（客人编号等）</Text>
+          <Input
+            className="input"
+            value={remark}
+            onInput={(e) => setRemark(e.detail.value)}
+            placeholder="选填，如客人编号、特殊要求"
           />
         </View>
 
@@ -393,6 +398,12 @@ export default function OrderCreate() {
           <View className="confirm-item">
             <Text>时间</Text>
             <Text>{deliveryTime}</Text>
+          </View>
+        )}
+        {remark.trim() && (
+          <View className="confirm-item">
+            <Text>备注</Text>
+            <Text>{remark}</Text>
           </View>
         )}
       </View>

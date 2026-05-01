@@ -3,7 +3,8 @@ import { View, Text, Button, Input } from "@tarojs/components";
 import Taro, { useRouter } from "@tarojs/taro";
 import { useAppStore } from "../../../store";
 import { getOrder, updateOrderStatus, addOrderNote, getOrderNotes } from "../../../services/order";
-import type { Order, OrderNote } from "../../../types";
+import { getUserById } from "../../../services/user";
+import type { Order, OrderNote, User } from "../../../types";
 import { ORDER_STATUS_MAP, DELIVERY_METHOD_MAP } from "../../../types";
 import "./index.css";
 
@@ -13,6 +14,7 @@ export default function SupplierDetail() {
   const { user } = useAppStore();
 
   const [order, setOrder] = useState<Order | null>(null);
+  const [guide, setGuide] = useState<User | null>(null);
   const [notes, setNotes] = useState<OrderNote[]>([]);
   const [noteText, setNoteText] = useState("");
   const [rejectReason, setRejectReason] = useState("");
@@ -29,6 +31,10 @@ export default function SupplierDetail() {
     ]);
     setOrder(orderData);
     setNotes(notesData);
+    if (orderData?.guideId) {
+      const guideData = await getUserById(orderData.guideId);
+      setGuide(guideData);
+    }
   }
 
   async function handleAccept() {
@@ -119,6 +125,35 @@ export default function SupplierDetail() {
         </View>
       </View>
 
+      {guide && (
+        <View className="card">
+          <Text className="card-title">导游信息</Text>
+          <View className="info-row">
+            <Text className="info-label">姓名</Text>
+            <Text>{guide.name}</Text>
+          </View>
+          <View className="info-row">
+            <Text className="info-label">手机号</Text>
+            <Text
+              style={{ color: "#8B5E3C", textDecoration: "underline" }}
+              onClick={() => {
+                if (process.env.TARO_ENV !== "h5") {
+                  Taro.makePhoneCall({ phoneNumber: guide.phone });
+                }
+              }}
+            >
+              {guide.phone}
+            </Text>
+          </View>
+          {guide.wechatId && (
+            <View className="info-row">
+              <Text className="info-label">微信号</Text>
+              <Text>{guide.wechatId}</Text>
+            </View>
+          )}
+        </View>
+      )}
+
       <View className="card">
         <Text className="card-title">配送信息</Text>
         <View className="info-row">
@@ -133,6 +168,12 @@ export default function SupplierDetail() {
           <View className="info-row">
             <Text className="info-label">时间</Text>
             <Text>{order.deliveryTime}</Text>
+          </View>
+        )}
+        {order.remark && (
+          <View className="info-row">
+            <Text className="info-label">备注</Text>
+            <Text>{order.remark}</Text>
           </View>
         )}
       </View>

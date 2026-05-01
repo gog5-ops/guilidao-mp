@@ -117,6 +117,12 @@ export default function OrderDetail() {
             <Text>{order.deliveryTime}</Text>
           </View>
         )}
+        {order.remark && (
+          <View className="info-row">
+            <Text className="info-label">备注</Text>
+            <Text>{order.remark}</Text>
+          </View>
+        )}
       </View>
 
       {canReceive && (

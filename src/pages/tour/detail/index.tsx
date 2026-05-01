@@ -13,6 +13,7 @@ export default function TourDetail() {
   const [tour, setTour] = useState<Tour | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useDidShow(() => {
     loadData();
@@ -45,29 +46,23 @@ export default function TourDetail() {
     });
   }
 
-  async function handleBatchSubmit() {
+  function handleShowConfirm() {
     if (!tour || orders.length === 0) return;
     if (tour.status !== "draft") {
       Taro.showToast({ title: "该团次已提交", icon: "none" });
       return;
     }
+    setShowConfirm(true);
+  }
 
-    const confirmed = await new Promise<boolean>((resolve) => {
-      Taro.showModal({
-        title: "确认提交",
-        content: `将提交${orders.length}个白单给供货商，是否继续？`,
-        success: (res) => resolve(res.confirm),
-        fail: () => resolve(false),
-      });
-    });
-    if (!confirmed) return;
-
+  async function handleBatchSubmit() {
     setSubmitting(true);
     try {
       await Promise.all(
         orders.map((order) => updateOrderStatus(order._id, "pending"))
       );
       await updateTourStatus(tourId, "submitted");
+      setShowConfirm(false);
       Taro.showToast({ title: "提交成功", icon: "success" });
       await loadData();
     } catch {
@@ -105,15 +100,53 @@ export default function TourDetail() {
         )}
       </View>
 
-      {tour.status === "draft" && orders.length > 0 && (
+      {tour.status === "draft" && orders.length > 0 && !showConfirm && (
         <View className="submit-section">
           <Button
             className="btn-submit"
-            onClick={handleBatchSubmit}
-            disabled={submitting}
+            onClick={handleShowConfirm}
           >
-            {submitting ? "提交中..." : "一键提交给供货商"}
+            一键提交给供货商
           </Button>
+        </View>
+      )}
+
+      {showConfirm && (
+        <View className="card" style={{ border: "2px solid #8B5E3C" }}>
+          <Text className="card-title" style={{ color: "#8B5E3C" }}>确认提交给供货商</Text>
+          <Text style={{ fontSize: "14px", color: "#666", marginBottom: "12px" }}>
+            共 {orders.length} 个白单，请确认以下订单信息：
+          </Text>
+          {orders.map((order) => (
+            <View key={order._id} style={{ padding: "8px 0", borderBottom: "1px solid #eee" }}>
+              <View style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Text style={{ fontWeight: "bold", fontSize: "14px" }}>白单 #{order.orderNo}</Text>
+                <Text style={{ color: "#8B5E3C", fontWeight: "bold" }}>¥{(order.totalAmount / 100).toFixed(0)}</Text>
+              </View>
+              <Text style={{ fontSize: "13px", color: "#666", marginTop: "4px" }}>
+                {order.items.map((i) => `${i.productName}x${i.quantity}`).join("  ")}
+              </Text>
+            </View>
+          ))}
+          <View style={{ display: "flex", justifyContent: "space-between", padding: "12px 0 4px", fontWeight: "bold" }}>
+            <Text>合计</Text>
+            <Text style={{ color: "#8B5E3C", fontSize: "16px" }}>¥{(tourTotal / 100).toFixed(0)}</Text>
+          </View>
+          <View style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
+            <Button
+              style={{ flex: 1, background: "#eee", color: "#333", border: "none", borderRadius: "8px" }}
+              onClick={() => setShowConfirm(false)}
+            >
+              取消
+            </Button>
+            <Button
+              style={{ flex: 1, background: "#8B5E3C", color: "#fff", border: "none", borderRadius: "8px" }}
+              onClick={handleBatchSubmit}
+              disabled={submitting}
+            >
+              {submitting ? "提交中..." : "确认提交"}
+            </Button>
+          </View>
         </View>
       )}
 

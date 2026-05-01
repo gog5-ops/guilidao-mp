@@ -10,7 +10,7 @@ export default function DeliveryEdit() {
   const router = useRouter();
   const orderId = router.params.orderId || "";
 
-  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("hotel");
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("delivery");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryTime, setDeliveryTime] = useState("");
 
@@ -45,7 +45,7 @@ export default function DeliveryEdit() {
     }
   }
 
-  const methods: DeliveryMethod[] = ["hotel", "pickup", "express"];
+  const methods: DeliveryMethod[] = ["delivery", "express"];
 
   return (
     <View className="page">
@@ -63,9 +63,7 @@ export default function DeliveryEdit() {
 
       <View className="form-group">
         <Text className="label">
-          {deliveryMethod === "hotel" ? "酒店名称 + 房间号"
-            : deliveryMethod === "pickup" ? "自提地点"
-            : "收货地址"}
+          {deliveryMethod === "delivery" ? "送货地址" : "收货地址"}
         </Text>
         <Input
           className="input"

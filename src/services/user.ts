@@ -18,6 +18,15 @@ export async function getUser(openId: string): Promise<User | null> {
   return data[0] as unknown as User;
 }
 
+export async function getUserById(id: string): Promise<User | null> {
+  try {
+    const { data } = await collection(Collections.USERS).doc(id).get();
+    return data as unknown as User;
+  } catch {
+    return null;
+  }
+}
+
 export async function createUser(
   openId: string,
   role: UserRole,
