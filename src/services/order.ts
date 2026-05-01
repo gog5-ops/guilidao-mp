@@ -31,6 +31,13 @@ export async function getOrdersByGuide(guideId: string): Promise<Order[]> {
   return data as unknown as Order[];
 }
 
+export async function getAllOrders(): Promise<Order[]> {
+  const { data } = await collection(Collections.ORDERS)
+    .orderBy("createdAt", "desc")
+    .get();
+  return data as unknown as Order[];
+}
+
 export async function getOrdersByStatus(
   status: OrderStatus
 ): Promise<Order[]> {

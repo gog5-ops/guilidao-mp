@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { View, Text } from "@tarojs/components";
-import Taro from "@tarojs/taro";
+import Taro, { useDidShow } from "@tarojs/taro";
+import { useAppStore } from "../../../store";
 import { getOrdersByStatus } from "../../../services/order";
 import type { Order, OrderStatus } from "../../../types";
 import { ORDER_STATUS_MAP, DELIVERY_METHOD_MAP } from "../../../types";
@@ -14,6 +15,7 @@ const TABS: { key: OrderStatus; label: string }[] = [
 ];
 
 export default function SupplierOrders() {
+  const { user, setUser } = useAppStore();
   const [activeTab, setActiveTab] = useState<OrderStatus>("pending");
   const [orders, setOrders] = useState<Order[]>([]);
 
@@ -21,9 +23,18 @@ export default function SupplierOrders() {
     loadOrders();
   }, [activeTab]);
 
+  useDidShow(() => {
+    loadOrders();
+  });
+
   async function loadOrders() {
     const data = await getOrdersByStatus(activeTab);
     setOrders(data);
+  }
+
+  function handleLogout() {
+    setUser(null);
+    Taro.reLaunch({ url: "/pages/index/index" });
   }
 
   function handleDetail(orderId: string) {
@@ -34,6 +45,10 @@ export default function SupplierOrders() {
 
   return (
     <View className="page">
+      <View className="header-top">
+        <Text className="welcome">你好，{user?.name || "供货商"}</Text>
+        <Text className="btn-logout" onClick={handleLogout}>退出</Text>
+      </View>
       <View className="tabs">
         {TABS.map((tab) => (
           <View

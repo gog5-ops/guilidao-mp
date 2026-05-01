@@ -45,7 +45,7 @@ export default function Index() {
   async function handleRegister(role: UserRole) {
     try {
       const { openId } = await login();
-      const name = role === "guide" ? "导游" : "供货商";
+      const name = role === "guide" ? "导游" : role === "supplier" ? "供货商" : "管理员";
       await createUser(openId, role, name, "");
       const newUser = await getUser(openId);
       setUser(newUser);
@@ -58,6 +58,11 @@ export default function Index() {
     if (!user) return;
     const data = await getToursByGuide(user._id);
     setTours(data);
+  }
+
+  function handleLogout() {
+    setUser(null);
+    setTours([]);
   }
 
   function handleCreateTour() {
@@ -91,20 +96,31 @@ export default function Index() {
           <Button className="btn-secondary" onClick={() => handleRegister("supplier")}>
             我是供货商
           </Button>
+          <Button className="btn-admin" onClick={() => handleRegister("admin")}>
+            管理后台
+          </Button>
         </View>
       </View>
     );
   }
 
   if (user.role === "supplier") {
-    Taro.switchTab({ url: "/pages/supplier/orders/index" });
+    Taro.reLaunch({ url: "/pages/supplier/orders/index" });
+    return null;
+  }
+
+  if (user.role === "admin") {
+    Taro.reLaunch({ url: "/pages/admin/index" });
     return null;
   }
 
   return (
     <View className="page">
       <View className="header">
-        <Text className="welcome">你好，{user.name}</Text>
+        <View className="header-top">
+          <Text className="welcome">你好，{user.name}</Text>
+          <Text className="btn-logout" onClick={handleLogout}>退出</Text>
+        </View>
         <Button className="btn-create" onClick={handleCreateTour}>
           + 创建团次
         </Button>

@@ -13,6 +13,13 @@ export async function getTour(id: string): Promise<Tour | null> {
   return (data as unknown as Tour) ?? null;
 }
 
+export async function getAllTours(): Promise<Tour[]> {
+  const { data } = await collection(Collections.TOURS)
+    .orderBy("createdAt", "desc")
+    .get();
+  return data as unknown as Tour[];
+}
+
 export async function getToursByGuide(guideId: string): Promise<Tour[]> {
   const { data } = await collection(Collections.TOURS)
     .where({ guideId })

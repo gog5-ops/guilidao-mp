@@ -1,0 +1,216 @@
+.page {
+  padding: 24px;
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.welcome {
+  font-size: 36px;
+  font-weight: bold;
+  color: #333;
+}
+
+.btn-logout {
+  font-size: 26px;
+  color: #999;
+  padding: 8px 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+/* Summary cards */
+.summary-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.summary-card {
+  flex: 1;
+  min-width: 40%;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  text-align: center;
+}
+
+.summary-value {
+  display: block;
+  font-size: 40px;
+  font-weight: bold;
+  color: #8B5E3C;
+  margin-bottom: 8px;
+}
+
+.summary-label {
+  display: block;
+  font-size: 24px;
+  color: #999;
+}
+
+/* Filters */
+.filters {
+  margin-bottom: 24px;
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.filter-btn {
+  font-size: 24px;
+  padding: 8px 20px;
+  border-radius: 20px;
+  background: #fff;
+  color: #666;
+  border: 1px solid #ddd;
+}
+
+.filter-btn.active {
+  background: #8B5E3C;
+  color: #fff;
+  border-color: #8B5E3C;
+}
+
+/* Section */
+.section {
+  margin-bottom: 32px;
+}
+
+.section-title {
+  display: block;
+  font-size: 30px;
+  font-weight: bold;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+/* Order card */
+.order-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.order-no {
+  font-size: 28px;
+  font-weight: bold;
+  color: #333;
+}
+
+.order-status {
+  font-size: 22px;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.status-pending {
+  background: #FFF3E0;
+  color: #E65100;
+}
+
+.status-confirmed {
+  background: #E3F2FD;
+  color: #1565C0;
+}
+
+.status-shipping {
+  background: #F3E5F5;
+  color: #7B1FA2;
+}
+
+.status-delivered {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.status-rejected {
+  background: #FFEBEE;
+  color: #C62828;
+}
+
+.order-info {
+  font-size: 24px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.order-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.order-date {
+  font-size: 24px;
+  color: #999;
+}
+
+.order-amount {
+  font-size: 28px;
+  font-weight: bold;
+  color: #8B5E3C;
+}
+
+/* Ranking */
+.rank-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rank-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.rank-index {
+  font-size: 28px;
+  font-weight: bold;
+  color: #8B5E3C;
+  width: 40px;
+}
+
+.rank-name {
+  font-size: 28px;
+  color: #333;
+}
+
+.rank-qty {
+  font-size: 26px;
+  color: #666;
+}
+
+.empty {
+  text-align: center;
+  padding: 60px 0;
+  color: #ccc;
+  font-size: 28px;
+}

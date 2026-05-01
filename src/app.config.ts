@@ -11,6 +11,7 @@ export default defineAppConfig({
     "pages/delivery/index",
     "pages/notes/index",
     "pages/stats/index",
+    "pages/admin/index",
   ],
   window: {
     backgroundTextStyle: "light",

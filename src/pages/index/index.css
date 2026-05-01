@@ -57,16 +57,38 @@
   padding: 24px 0;
 }
 
+.btn-admin {
+  background-color: #f5f0eb;
+  color: #8B5E3C;
+  border: 2px solid #8B5E3C;
+  border-radius: 12px;
+  font-size: 32px;
+  padding: 24px 0;
+  margin-top: 24px;
+}
+
 .page {
   padding: 24px;
   min-height: 100vh;
 }
 
 .header {
+  margin-bottom: 32px;
+}
+
+.header-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
+  margin-bottom: 16px;
+}
+
+.btn-logout {
+  font-size: 26px;
+  color: #999;
+  padding: 8px 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
 }
 
 .welcome {
