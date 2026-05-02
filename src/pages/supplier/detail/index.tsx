@@ -171,7 +171,8 @@ export default function SupplierDetail() {
     0
   );
   const hasExpressEntries = entries.some((e) => e.deliveryMethod === "express");
-  const isAdmin = user?.role === "admin";
+  const isSupplier = user?.role === "supplier";
+  const isGuide = user?.role === "guide";
 
   return (
     <View className="page">
@@ -292,7 +293,7 @@ export default function SupplierDetail() {
       </View>
 
       {/* Tracking number for express orders when confirmed */}
-      {!isAdmin && supplierOrder.status === "confirmed" && hasExpressEntries && (
+      {isSupplier && supplierOrder.status === "confirmed" && hasExpressEntries && (
         <View className="card">
           <Text className="card-title">快递单号</Text>
           <Input
@@ -308,7 +309,7 @@ export default function SupplierDetail() {
       )}
 
       {/* Action buttons */}
-      {!isAdmin && supplierOrder.status === "pending" && (
+      {isSupplier && supplierOrder.status === "pending" && (
         <View className="action-group">
           <Button className="btn-accept" onClick={handleAccept}>
             接单
@@ -319,7 +320,7 @@ export default function SupplierDetail() {
         </View>
       )}
 
-      {!isAdmin && showReject && (
+      {isSupplier && showReject && (
         <View className="card">
           <Text className="card-title">拒单原因</Text>
           <Input
@@ -334,7 +335,7 @@ export default function SupplierDetail() {
         </View>
       )}
 
-      {!isAdmin && supplierOrder.status === "confirmed" && (
+      {isSupplier && supplierOrder.status === "confirmed" && (
         <View style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
           <Button className="btn-ship" style={{ flex: 1, marginBottom: 0 }} onClick={handleShip}>
             标记全部发货
@@ -359,14 +360,39 @@ export default function SupplierDetail() {
       )}
 
       {/* Partial shipped: allow marking full shipment */}
-      {!isAdmin && supplierOrder.status === "partially_shipped" && (
+      {isSupplier && supplierOrder.status === "partially_shipped" && (
         <Button className="btn-ship" onClick={handleShip}>
           标记全部发货
         </Button>
       )}
 
+      {/* Guide: confirm receipt */}
+      {isGuide && (supplierOrder.status === "shipping" || supplierOrder.status === "partially_shipped") && (
+        <Button
+          style={{
+            width: "100%",
+            background: "#2E7D32",
+            color: "#fff",
+            border: "none",
+            borderRadius: "12px",
+            fontSize: "30px",
+            padding: "20px 0",
+            marginBottom: "16px",
+          }}
+          onClick={async () => {
+            const result = await Taro.showModal({ title: "确认收货", content: "确认已收到所有商品？" });
+            if (!result.confirm) return;
+            await updateSupplierOrderStatus(orderId, "delivered");
+            loadData();
+            Taro.showToast({ title: "已确认收货", icon: "success" });
+          }}
+        >
+          确认收货
+        </Button>
+      )}
+
       {/* After-sales button: visible when delivered */}
-      {!isAdmin && supplierOrder.status === "delivered" && (
+      {isSupplier && supplierOrder.status === "delivered" && (
         <View className="card">
           <Text className="card-title">售后服务</Text>
           {(!supplierOrder.afterSalesStatus || supplierOrder.afterSalesStatus === "none") ? (
