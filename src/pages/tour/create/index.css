@@ -3,6 +3,9 @@
   min-height: 100vh;
 }
 
+.back-bar { padding: 16px 0; margin-bottom: 12px; }
+.back-arrow { font-size: 28px; color: #8B5E3C; }
+
 .form-group {
   margin-bottom: 32px;
 }

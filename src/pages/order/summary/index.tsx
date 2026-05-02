@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { View, Text, ScrollView } from "@tarojs/components";
-import { useRouter } from "@tarojs/taro";
+import Taro, { useRouter } from "@tarojs/taro";
 import { getTour } from "../../../services/tour";
-import { getOrdersByTour } from "../../../services/order";
-import { getProducts } from "../../../services/product";
-import type { Tour, Order, Product } from "../../../types";
+import { getWhiteSlipByTour } from "../../../services/white-slip";
+import type { Tour, WhiteSlip, GuestEntry } from "../../../types";
 import "./index.css";
 
 export default function OrderSummary() {
@@ -12,39 +11,19 @@ export default function OrderSummary() {
   const tourId = router.params.tourId || "";
 
   const [tour, setTour] = useState<Tour | null>(null);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [whiteSlip, setWhiteSlip] = useState<WhiteSlip | null>(null);
 
   useEffect(() => {
     loadData();
   }, []);
 
   async function loadData() {
-    const [tourData, orderData, productData] = await Promise.all([
+    const [tourData, slipData] = await Promise.all([
       getTour(tourId),
-      getOrdersByTour(tourId),
-      getProducts(),
+      getWhiteSlipByTour(tourId),
     ]);
     setTour(tourData);
-    setOrders(orderData);
-    setProducts(productData);
-  }
-
-  function getQuantity(order: Order, productId: string): number {
-    const item = order.items.find((i) => i.productId === productId);
-    return item?.quantity ?? 0;
-  }
-
-  function getProductTotal(productId: string): number {
-    return orders.reduce((sum, o) => sum + getQuantity(o, productId), 0);
-  }
-
-  function grandTotal(): number {
-    return orders.reduce((sum, o) => sum + o.totalAmount, 0);
-  }
-
-  function totalSets(): number {
-    return products.reduce((sum, p) => sum + getProductTotal(p._id), 0);
+    setWhiteSlip(slipData);
   }
 
   if (!tour) {
@@ -55,10 +34,51 @@ export default function OrderSummary() {
     );
   }
 
+  const entries = whiteSlip?.entries || [];
+
+  // Collect all unique products across all entries
+  const productMap = new Map<string, string>(); // productId -> productName
+  for (const entry of entries) {
+    for (const item of entry.items) {
+      if (!productMap.has(item.productId)) {
+        productMap.set(item.productId, item.productName);
+      }
+    }
+  }
+  const productIds = Array.from(productMap.keys());
+
+  function getQuantity(entry: GuestEntry, productId: string): number {
+    const item = entry.items.find((i) => i.productId === productId);
+    return item?.quantity ?? 0;
+  }
+
+  function getProductTotal(productId: string): number {
+    return entries.reduce((sum, e) => sum + getQuantity(e, productId), 0);
+  }
+
+  function entryTotal(entry: GuestEntry): number {
+    return entry.items.reduce((sum, i) => sum + i.subtotal, 0);
+  }
+
+  function entryItemCount(entry: GuestEntry): number {
+    return entry.items.reduce((sum, i) => sum + i.quantity, 0);
+  }
+
+  function grandTotal(): number {
+    return whiteSlip?.totalAmount || entries.reduce((sum, e) => sum + entryTotal(e), 0);
+  }
+
+  function totalSets(): number {
+    return whiteSlip?.totalQuantity || entries.reduce((sum, e) => sum + entryItemCount(e), 0);
+  }
+
   return (
     <View className="page">
+      <View className="back-bar" onClick={() => Taro.navigateBack()}>
+        <Text className="back-arrow">&larr; 返回</Text>
+      </View>
       <View className="summary-header">
-        <Text className="summary-brand">桂礼道 — 汇总单</Text>
+        <Text className="summary-brand">桂礼道 -- 汇总单</Text>
         <Text className="summary-info">
           团号：{tour.tourCode}　　日期：{tour.date}
         </Text>
@@ -67,42 +87,47 @@ export default function OrderSummary() {
       <ScrollView scrollX className="table-scroll">
         <View className="table">
           <View className="table-row table-header">
-            <Text className="cell cell-no">白单</Text>
-            {products.map((p) => (
-              <Text key={p._id} className="cell cell-product">
-                {p.name}
+            <Text className="cell cell-no">游客</Text>
+            {productIds.map((pid) => (
+              <Text key={pid} className="cell cell-product">
+                {productMap.get(pid)}
               </Text>
             ))}
+            <Text className="cell cell-amount">小计(套)</Text>
             <Text className="cell cell-amount">金额</Text>
           </View>
 
-          {orders.map((order) => (
-            <View key={order._id} className="table-row">
-              <Text className="cell cell-no">#{order.orderNo}</Text>
-              {products.map((p) => {
-                const qty = getQuantity(order, p._id);
+          {entries.map((entry) => (
+            <View key={entry.guestNo} className="table-row">
+              <Text className="cell cell-no">{entry.guestNo}</Text>
+              {productIds.map((pid) => {
+                const qty = getQuantity(entry, pid);
                 return (
-                  <Text key={p._id} className="cell cell-product">
+                  <Text key={pid} className="cell cell-product">
                     {qty > 0 ? qty : ""}
                   </Text>
                 );
               })}
               <Text className="cell cell-amount">
-                ¥{(order.totalAmount / 100).toFixed(0)}
+                {entryItemCount(entry)}套
+              </Text>
+              <Text className="cell cell-amount">
+                ¥{(entryTotal(entry) / 100).toFixed(0)}
               </Text>
             </View>
           ))}
 
           <View className="table-row table-footer">
             <Text className="cell cell-no">合计</Text>
-            {products.map((p) => {
-              const total = getProductTotal(p._id);
+            {productIds.map((pid) => {
+              const total = getProductTotal(pid);
               return (
-                <Text key={p._id} className="cell cell-product">
+                <Text key={pid} className="cell cell-product">
                   {total > 0 ? total : ""}
                 </Text>
               );
             })}
+            <Text className="cell cell-amount">{totalSets()}套</Text>
             <Text className="cell cell-amount">
               ¥{(grandTotal() / 100).toFixed(0)}
             </Text>

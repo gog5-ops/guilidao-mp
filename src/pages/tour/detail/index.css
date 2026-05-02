@@ -1,4 +1,6 @@
 .page { padding: 24px; min-height: 100vh; }
+.back-bar { padding: 16px 0; margin-bottom: 12px; }
+.back-arrow { font-size: 28px; color: #8B5E3C; }
 .page-center { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
 
 .tour-header { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
@@ -20,14 +22,21 @@
 .status-shipping { background: #E8F5E9; color: #2E7D32; }
 .status-delivered { background: #E8F5E9; color: #2E7D32; }
 .status-rejected { background: #FFEBEE; color: #C62828; }
+.status-partially_shipped { background: #FFF8E1; color: #F57F17; }
 
 .order-items { font-size: 24px; color: #666; display: block; margin-bottom: 12px; }
 .order-footer { display: flex; justify-content: space-between; }
 .delivery { font-size: 24px; color: #999; }
 .amount { font-size: 28px; font-weight: bold; color: #8B5E3C; }
 
+.card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+.card-title { display: block; font-size: 28px; font-weight: bold; color: #333; margin-bottom: 16px; }
+
 .empty { text-align: center; padding: 60px 0; color: #ccc; font-size: 28px; }
 
 .submit-section { margin-bottom: 24px; }
 .btn-submit { width: 100%; background: #D84315; color: #fff; border: none; border-radius: 8px; font-size: 30px; padding: 24px 0; font-weight: bold; }
 .btn-submit[disabled] { opacity: 0.5; }
+
+.tour-total { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 16px; padding: 16px 24px; background: #fff; border-radius: 12px; font-size: 30px; font-weight: bold; color: #333; }
+.tour-total-amount { color: #8B5E3C; font-size: 32px; }

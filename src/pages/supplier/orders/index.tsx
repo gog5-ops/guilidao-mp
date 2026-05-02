@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { View, Text } from "@tarojs/components";
-import Taro from "@tarojs/taro";
-import { getOrdersByStatus } from "../../../services/order";
-import type { Order, OrderStatus } from "../../../types";
-import { ORDER_STATUS_MAP, DELIVERY_METHOD_MAP } from "../../../types";
+import Taro, { useDidShow } from "@tarojs/taro";
+import { useAppStore } from "../../../store";
+import { getSupplierOrdersByStatus } from "../../../services/supplier-order";
+import type { SupplierOrder, OrderStatus } from "../../../types";
+import { ORDER_STATUS_MAP } from "../../../types";
 import "./index.css";
 
 const TABS: { key: OrderStatus; label: string }[] = [
@@ -14,16 +15,26 @@ const TABS: { key: OrderStatus; label: string }[] = [
 ];
 
 export default function SupplierOrders() {
+  const { user, setUser } = useAppStore();
   const [activeTab, setActiveTab] = useState<OrderStatus>("pending");
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<SupplierOrder[]>([]);
 
   useEffect(() => {
     loadOrders();
   }, [activeTab]);
 
+  useDidShow(() => {
+    loadOrders();
+  });
+
   async function loadOrders() {
-    const data = await getOrdersByStatus(activeTab);
+    const data = await getSupplierOrdersByStatus(activeTab);
     setOrders(data);
+  }
+
+  function handleLogout() {
+    setUser(null);
+    Taro.reLaunch({ url: "/pages/index/index" });
   }
 
   function handleDetail(orderId: string) {
@@ -34,6 +45,10 @@ export default function SupplierOrders() {
 
   return (
     <View className="page">
+      <View className="header-top">
+        <Text className="welcome" onClick={() => Taro.navigateTo({ url: "/pages/profile/index" })}>你好，{user?.name || "供货商"} &gt;</Text>
+        <Text className="btn-logout" onClick={handleLogout}>退出</Text>
+      </View>
       <View className="tabs">
         {TABS.map((tab) => (
           <View
@@ -58,22 +73,16 @@ export default function SupplierOrders() {
             onClick={() => handleDetail(order._id)}
           >
             <View className="order-header">
-              <Text className="order-no">白单 #{order.orderNo}</Text>
-              <Text className="order-time">
-                {new Date(order.createdAt).toLocaleDateString("zh-CN")}
-              </Text>
+              <Text className="order-no">团次 {order.tourCode}</Text>
+              <Text className="order-time">{order.tourDate}</Text>
             </View>
-            <Text className="order-items">
-              {order.items.map((i) => `${i.productName}×${i.quantity}`).join("  ")}
-            </Text>
+            <View className="order-meta">
+              <Text className="guide-name">导游：{order.guideName}</Text>
+              <Text className="slip-count">{order.whiteSlipIds.length}张白单</Text>
+            </View>
             <View className="order-footer">
-              <Text className="delivery">
-                {DELIVERY_METHOD_MAP[order.deliveryMethod]}
-                {order.deliveryAddress ? ` · ${order.deliveryAddress}` : ""}
-              </Text>
-              <Text className="amount">
-                ¥{(order.totalAmount / 100).toFixed(0)}
-              </Text>
+              <Text className="status-tag">{ORDER_STATUS_MAP[order.status]}</Text>
+              <Text className="amount">{order.totalQuantity}套</Text>
             </View>
           </View>
         ))

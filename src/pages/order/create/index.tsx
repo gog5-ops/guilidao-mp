@@ -1,43 +1,104 @@
 import { useEffect, useState } from "react";
-import { View, Text, Button, Picker, Input } from "@tarojs/components";
+import { View, Text, Button, Input } from "@tarojs/components";
 import Taro, { useRouter } from "@tarojs/taro";
 import { useAppStore } from "../../../store";
 import { getProducts } from "../../../services/product";
+import { getTour } from "../../../services/tour";
+import { getRedSlip } from "../../../services/red-slip";
 import { createOrder, generateOrderNo } from "../../../services/order";
 import {
   getDeliveryLocations,
   createDeliveryLocation,
   incrementUsageCount,
 } from "../../../services/delivery-location";
-import type { Product, DeliveryMethod, DeliveryLocation, OrderItem } from "../../../types";
+import type { Product, DeliveryMethod, DeliveryLocation, OrderItem, RedSlipItem } from "../../../types";
 import { DELIVERY_METHOD_MAP } from "../../../types";
 import "./index.css";
+
+interface DisplayProduct {
+  _id: string;
+  name: string;
+  spec: string;
+  unit: string;
+  price: number; // cents, from red slip or product table
+}
+
+interface CustomItem {
+  id: string;
+  name: string;
+  price: number; // cents
+  quantity: number;
+}
+
+let customIdCounter = 0;
 
 export default function OrderCreate() {
   const router = useRouter();
   const tourId = router.params.tourId || "";
   const { user } = useAppStore();
 
-  const [products, setProducts] = useState<Product[]>([]);
+  const [displayProducts, setDisplayProducts] = useState<DisplayProduct[]>([]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("hotel");
+  const [editPrices, setEditPrices] = useState<Record<string, number>>({});
+  const [guestNo, setGuestNo] = useState("");
+  const [customItems, setCustomItems] = useState<CustomItem[]>([]);
+  const [remark, setRemark] = useState("");
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("delivery");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryTime, setDeliveryTime] = useState("");
   const [savedLocations, setSavedLocations] = useState<DeliveryLocation[]>([]);
   const [selectedLocationId, setSelectedLocationId] = useState("");
   const [showNewLocation, setShowNewLocation] = useState(false);
   const [step, setStep] = useState<"products" | "delivery" | "confirm">("products");
+  const [redSlipName, setRedSlipName] = useState("");
 
   useEffect(() => {
     loadProducts();
   }, []);
 
   async function loadProducts() {
-    const data = await getProducts();
-    setProducts(data);
+    let items: DisplayProduct[] = [];
+    // Try to load red slip from tour
+    if (tourId) {
+      try {
+        const tour = await getTour(tourId);
+        if (tour?.redSlipId) {
+          const slip = await getRedSlip(tour.redSlipId);
+          if (slip && slip.items.length > 0) {
+            setRedSlipName(slip.name);
+            items = slip.items.map((si: RedSlipItem) => ({
+              _id: si.productId,
+              name: si.productName,
+              spec: si.spec,
+              unit: si.unit,
+              price: si.price,
+            }));
+          }
+        }
+      } catch {
+        // Fall through to load all products
+      }
+    }
+    // Fallback: load all active products
+    if (items.length === 0) {
+      const data = await getProducts();
+      items = data.map((p: Product) => ({
+        _id: p._id,
+        name: p.name,
+        spec: p.spec,
+        unit: p.unit,
+        price: p.price,
+      }));
+    }
+    setDisplayProducts(items);
     const defaultQty: Record<string, number> = {};
-    data.forEach((p) => (defaultQty[p._id] = 0));
+    const defaultPrices: Record<string, number> = {};
+    items.forEach((p) => {
+      defaultQty[p._id] = 0;
+      defaultPrices[p._id] = p.price;
+    });
     setQuantities(defaultQty);
+    setEditPrices(defaultPrices);
   }
 
   function updateQuantity(productId: string, delta: number) {
@@ -47,33 +108,99 @@ export default function OrderCreate() {
     }));
   }
 
-  function totalSets() {
-    return Object.values(quantities).reduce((sum, q) => sum + q, 0);
+  function handlePriceChange(productId: string, val: string) {
+    const yuan = parseFloat(val);
+    if (!isNaN(yuan)) {
+      setEditPrices((prev) => ({ ...prev, [productId]: Math.round(yuan * 100) }));
+    } else if (val === "") {
+      setEditPrices((prev) => ({ ...prev, [productId]: 0 }));
+    }
   }
 
-  function totalAmount() {
-    return products.reduce(
-      (sum, p) => sum + (quantities[p._id] || 0) * p.price,
-      0
+  function addCustomItem() {
+    customIdCounter += 1;
+    setCustomItems((prev) => [
+      ...prev,
+      { id: `custom_${customIdCounter}`, name: "", price: 0, quantity: 1 },
+    ]);
+  }
+
+  function updateCustomItem(id: string, field: keyof CustomItem, value: string | number) {
+    setCustomItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
     );
   }
 
+  function updateCustomItemPrice(id: string, yuanStr: string) {
+    const yuan = parseFloat(yuanStr);
+    if (!isNaN(yuan)) {
+      updateCustomItem(id, "price", Math.round(yuan * 100));
+    } else if (yuanStr === "") {
+      updateCustomItem(id, "price", 0);
+    }
+  }
+
+  function updateCustomItemQuantity(id: string, delta: number) {
+    setCustomItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
+          : item
+      )
+    );
+  }
+
+  function removeCustomItem(id: string) {
+    setCustomItems((prev) => prev.filter((item) => item.id !== id));
+  }
+
+  function totalSets() {
+    const productQty = Object.values(quantities).reduce((sum, q) => sum + q, 0);
+    const customQty = customItems.reduce((sum, c) => sum + c.quantity, 0);
+    return productQty + customQty;
+  }
+
+  function totalAmount() {
+    const productTotal = displayProducts.reduce(
+      (sum, p) => sum + (quantities[p._id] || 0) * (editPrices[p._id] || p.price),
+      0
+    );
+    const customTotal = customItems.reduce(
+      (sum, c) => sum + c.price * c.quantity,
+      0
+    );
+    return productTotal + customTotal;
+  }
+
   function buildItems(): OrderItem[] {
-    return products
+    const productItems = displayProducts
       .filter((p) => (quantities[p._id] || 0) > 0)
-      .map((p) => ({
-        productId: p._id,
-        productName: p.name,
-        quantity: quantities[p._id],
-        unitPrice: p.price,
-        subtotal: quantities[p._id] * p.price,
+      .map((p) => {
+        const qty = quantities[p._id];
+        const price = editPrices[p._id] || p.price;
+        return {
+          productId: p._id,
+          productName: p.name,
+          quantity: qty,
+          unitPrice: price,
+          subtotal: qty * price,
+        };
+      });
+    const customOrderItems = customItems
+      .filter((c) => c.name.trim() && c.quantity > 0)
+      .map((c) => ({
+        productId: c.id,
+        productName: c.name,
+        quantity: c.quantity,
+        unitPrice: c.price,
+        subtotal: c.price * c.quantity,
       }));
+    return [...productItems, ...customOrderItems];
   }
 
   async function loadLocations() {
-    const locType = deliveryMethod === "hotel" ? "hotel" : "pickup_point";
     if (deliveryMethod !== "express") {
-      const locs = await getDeliveryLocations(locType);
+      const locs = await getDeliveryLocations();
       setSavedLocations(locs);
     } else {
       setSavedLocations([]);
@@ -88,10 +215,9 @@ export default function OrderCreate() {
 
   async function handleSaveNewLocation() {
     if (!deliveryAddress.trim()) return;
-    const locType = deliveryMethod === "hotel" ? "hotel" as const : "pickup_point" as const;
     await createDeliveryLocation({
       name: deliveryAddress.trim(),
-      type: locType,
+      type: "delivery",
       address: "",
       contactPhone: "",
       isActive: true,
@@ -103,6 +229,10 @@ export default function OrderCreate() {
   }
 
   function handleNext() {
+    if (!guestNo.trim()) {
+      Taro.showToast({ title: "请填写游客编号", icon: "none" });
+      return;
+    }
     if (totalSets() === 0) {
       Taro.showToast({ title: "请至少选择一件商品", icon: "none" });
       return;
@@ -131,11 +261,13 @@ export default function OrderCreate() {
         tourId,
         guideId: user._id,
         supplierId: "",
+        guestNo: guestNo.trim(),
         status: "pending",
         deliveryMethod,
         deliveryAddress: deliveryAddress.trim(),
         deliveryTime: deliveryTime.trim(),
         totalAmount: totalAmount(),
+        remark: remark.trim() || undefined,
         items: buildItems(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -149,19 +281,46 @@ export default function OrderCreate() {
     }
   }
 
-  const deliveryMethods: DeliveryMethod[] = ["hotel", "pickup", "express"];
+  const deliveryMethods: DeliveryMethod[] = ["delivery", "express"];
 
   if (step === "products") {
     return (
       <View className="page">
+        <View className="back-bar" onClick={() => Taro.navigateBack()}>
+          <Text className="back-arrow">&larr; 返回</Text>
+        </View>
         <Text className="page-title">选择商品和数量</Text>
-        {products.map((p) => (
+
+        <View className="form-group" style={{ marginBottom: "20px" }}>
+          <Text className="label">游客编号 *</Text>
+          <Input
+            className="input"
+            value={guestNo}
+            onInput={(e) => setGuestNo(e.detail.value)}
+            placeholder="请输入游客编号，如 001"
+          />
+        </View>
+
+        {redSlipName && (
+          <Text className="red-slip-hint">红单：{redSlipName}</Text>
+        )}
+        {displayProducts.map((p) => (
           <View key={p._id} className="product-row">
             <View className="product-info">
               <Text className="product-name">{p.name}</Text>
               <Text className="product-spec">
-                {p.spec} · ¥{p.price / 100}/{p.unit}
+                {p.spec} / {p.unit}
               </Text>
+              <View className="price-edit-row">
+                <Text className="price-label">单价：</Text>
+                <Input
+                  className="price-inline-input"
+                  type="digit"
+                  value={((editPrices[p._id] || 0) / 100).toString()}
+                  onInput={(e) => handlePriceChange(p._id, e.detail.value)}
+                />
+                <Text className="price-yuan">元</Text>
+              </View>
             </View>
             <View className="qty-control">
               <View className="qty-btn" onClick={() => updateQuantity(p._id, -1)}>
@@ -174,9 +333,49 @@ export default function OrderCreate() {
             </View>
           </View>
         ))}
+
+        <View className="custom-section">
+          <Text className="custom-section-title">自定义商品（优惠等）</Text>
+          {customItems.map((item) => (
+            <View key={item.id} className="custom-item-row">
+              <View className="custom-item-fields">
+                <Input
+                  className="custom-name-input"
+                  value={item.name}
+                  onInput={(e) => updateCustomItem(item.id, "name", e.detail.value)}
+                  placeholder="商品名称"
+                />
+                <View className="custom-price-row">
+                  <Input
+                    className="custom-price-input"
+                    type="digit"
+                    value={item.price ? (item.price / 100).toString() : ""}
+                    onInput={(e) => updateCustomItemPrice(item.id, e.detail.value)}
+                    placeholder="单价"
+                  />
+                  <Text className="price-yuan">元</Text>
+                </View>
+              </View>
+              <View className="qty-control">
+                <View className="qty-btn" onClick={() => updateCustomItemQuantity(item.id, -1)}>
+                  <Text>-</Text>
+                </View>
+                <Text className="qty-value">{item.quantity}</Text>
+                <View className="qty-btn" onClick={() => updateCustomItemQuantity(item.id, 1)}>
+                  <Text>+</Text>
+                </View>
+              </View>
+              <Text className="custom-remove" onClick={() => removeCustomItem(item.id)}>删除</Text>
+            </View>
+          ))}
+          <View className="custom-add-btn" onClick={addCustomItem}>
+            <Text>+ 添加</Text>
+          </View>
+        </View>
+
         <View className="summary-bar">
           <Text className="summary-text">
-            合计：{totalSets()}套 · ¥{(totalAmount() / 100).toFixed(0)}
+            合计：{totalSets()}套 / ¥{(totalAmount() / 100).toFixed(2)}
           </Text>
           <Button className="btn-next" onClick={handleNext}>
             下一步
@@ -189,6 +388,9 @@ export default function OrderCreate() {
   if (step === "delivery") {
     return (
       <View className="page">
+        <View className="back-bar" onClick={() => Taro.navigateBack()}>
+          <Text className="back-arrow">&larr; 返回</Text>
+        </View>
         <Text className="page-title">选择送货方式</Text>
         <View className="delivery-options">
           {deliveryMethods.map((m) => (
@@ -200,9 +402,8 @@ export default function OrderCreate() {
                 setSelectedLocationId("");
                 setDeliveryAddress("");
                 setShowNewLocation(false);
-                const locType = m === "hotel" ? "hotel" as const : "pickup_point" as const;
                 if (m !== "express") {
-                  getDeliveryLocations(locType).then(setSavedLocations);
+                  getDeliveryLocations().then(setSavedLocations);
                 } else {
                   setSavedLocations([]);
                 }
@@ -243,11 +444,7 @@ export default function OrderCreate() {
         {(deliveryMethod === "express" || showNewLocation || savedLocations.length === 0) && (
           <View className="form-group">
             <Text className="label">
-              {deliveryMethod === "hotel"
-                ? "酒店名称 + 房间号"
-                : deliveryMethod === "pickup"
-                  ? "自提地点"
-                  : "收货地址"}
+              {deliveryMethod === "delivery" ? "送货地址" : "收货地址"}
             </Text>
             <Input
               className="input"
@@ -273,6 +470,16 @@ export default function OrderCreate() {
           />
         </View>
 
+        <View className="form-group">
+          <Text className="label">备注（客人编号等）</Text>
+          <Input
+            className="input"
+            value={remark}
+            onInput={(e) => setRemark(e.detail.value)}
+            placeholder="选填，如客人编号、特殊要求"
+          />
+        </View>
+
         <View className="btn-group">
           <Button className="btn-back" onClick={() => setStep("products")}>
             上一步
@@ -288,19 +495,22 @@ export default function OrderCreate() {
   const items = buildItems();
   return (
     <View className="page">
+      <View className="back-bar" onClick={() => Taro.navigateBack()}>
+        <Text className="back-arrow">&larr; 返回</Text>
+      </View>
       <Text className="page-title">确认订单</Text>
 
       <View className="confirm-section">
         <Text className="section-label">商品</Text>
         {items.map((item) => (
           <View key={item.productId} className="confirm-item">
-            <Text>{item.productName} × {item.quantity}套</Text>
-            <Text>¥{(item.subtotal / 100).toFixed(0)}</Text>
+            <Text>{item.productName} x {item.quantity}套</Text>
+            <Text className="total-amount">¥{(item.subtotal / 100).toFixed(2)}</Text>
           </View>
         ))}
         <View className="confirm-total">
-          <Text>合计</Text>
-          <Text className="total-amount">¥{(totalAmount() / 100).toFixed(0)}</Text>
+          <Text>合计：{totalSets()}套</Text>
+          <Text className="total-amount">¥{(totalAmount() / 100).toFixed(2)}</Text>
         </View>
       </View>
 
@@ -318,6 +528,12 @@ export default function OrderCreate() {
           <View className="confirm-item">
             <Text>时间</Text>
             <Text>{deliveryTime}</Text>
+          </View>
+        )}
+        {remark.trim() && (
+          <View className="confirm-item">
+            <Text>备注</Text>
+            <Text>{remark}</Text>
           </View>
         )}
       </View>

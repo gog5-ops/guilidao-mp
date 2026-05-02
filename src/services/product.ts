@@ -9,9 +9,45 @@ export async function getProducts(): Promise<Product[]> {
   return data as unknown as Product[];
 }
 
+/** Return ALL products (active + inactive), ordered by sortOrder. Admin use. */
+export async function getAllProducts(): Promise<Product[]> {
+  const { data } = await collection(Collections.PRODUCTS)
+    .orderBy("sortOrder", "asc")
+    .get();
+  return data as unknown as Product[];
+}
+
 export async function getProduct(id: string): Promise<Product | null> {
   const { data } = await collection(Collections.PRODUCTS).doc(id).get();
   return (data as unknown as Product) ?? null;
+}
+
+export async function createProduct(
+  product: Omit<Product, "_id">
+): Promise<string> {
+  const now = new Date().toISOString();
+  const { _id } = await collection(Collections.PRODUCTS).add({
+    data: { ...product, createdAt: now, updatedAt: now },
+  });
+  return _id;
+}
+
+export async function updateProduct(
+  id: string,
+  data: Partial<Product>
+): Promise<void> {
+  await collection(Collections.PRODUCTS)
+    .doc(id)
+    .update({ data: { ...data, updatedAt: new Date().toISOString() } });
+}
+
+export async function toggleProductActive(
+  id: string,
+  isActive: boolean
+): Promise<void> {
+  await collection(Collections.PRODUCTS)
+    .doc(id)
+    .update({ data: { isActive, updatedAt: new Date().toISOString() } });
 }
 
 export const INITIAL_PRODUCTS: Omit<Product, "_id">[] = [

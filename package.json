@@ -9,7 +9,9 @@
     "dev:h5": "taro build --type h5 --watch",
     "build:h5": "taro build --type h5",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "test": "playwright test",
+    "test:report": "playwright show-report"
   },
   "browserslist": [
     "last 3 versions",
@@ -38,6 +40,7 @@
     "@babel/preset-react": "^7.28.5",
     "@babel/preset-typescript": "^7.28.5",
     "@babel/runtime": "^7.24.0",
+    "@playwright/test": "^1.59.1",
     "@tarojs/webpack5-prebundle": "4.2.0",
     "@types/react": "^18.3.0",
     "babel-preset-taro": "4.2.0",

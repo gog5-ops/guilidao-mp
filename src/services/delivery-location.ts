@@ -1,18 +1,10 @@
 import { collection, Collections } from "./db";
-import type { DeliveryLocation, DeliveryLocationType } from "../types";
+import type { DeliveryLocation } from "../types";
 
-export async function getDeliveryLocations(
-  type?: DeliveryLocationType
-): Promise<DeliveryLocation[]> {
-  let query = collection(Collections.DELIVERY_LOCATIONS).where({
+export async function getDeliveryLocations(): Promise<DeliveryLocation[]> {
+  const query = collection(Collections.DELIVERY_LOCATIONS).where({
     isActive: true,
   });
-  if (type) {
-    query = collection(Collections.DELIVERY_LOCATIONS).where({
-      isActive: true,
-      type,
-    });
-  }
   const { data } = await query.orderBy("usageCount", "desc").get();
   return data as unknown as DeliveryLocation[];
 }

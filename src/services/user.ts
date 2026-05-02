@@ -3,6 +3,9 @@ import { collection, Collections } from "./db";
 import type { User, UserRole } from "../types";
 
 export async function login(): Promise<{ openId: string }> {
+  if (process.env.TARO_ENV === "h5") {
+    return { openId: "mock_openid_guide" };
+  }
   const { result } = await Taro.cloud.callFunction({ name: "login" });
   return result as { openId: string };
 }
@@ -13,6 +16,15 @@ export async function getUser(openId: string): Promise<User | null> {
     .get();
   if (data.length === 0) return null;
   return data[0] as unknown as User;
+}
+
+export async function getUserById(id: string): Promise<User | null> {
+  try {
+    const { data } = await collection(Collections.USERS).doc(id).get();
+    return data as unknown as User;
+  } catch {
+    return null;
+  }
 }
 
 export async function createUser(
@@ -32,6 +44,14 @@ export async function createUser(
     },
   });
   return _id as string;
+}
+
+export async function getUserByPhone(phone: string): Promise<User | null> {
+  const { data } = await collection(Collections.USERS)
+    .where({ phone })
+    .get();
+  if (data.length === 0) return null;
+  return data[0] as unknown as User;
 }
 
 export async function updateUser(

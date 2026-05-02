@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { View, Text } from "@tarojs/components";
 import { useAppStore } from "../../store";
-import { getOrdersByGuide } from "../../services/order";
-import type { Order, OrderStatus } from "../../types";
+import { getSupplierOrders } from "../../services/supplier-order";
+import type { SupplierOrder, OrderStatus } from "../../types";
 import { ORDER_STATUS_MAP } from "../../types";
 import "./index.css";
 
@@ -32,7 +32,7 @@ function getFilterStartDate(filter: DateFilter): Date | null {
 
 export default function Stats() {
   const { user } = useAppStore();
-  const [allOrders, setAllOrders] = useState<Order[]>([]);
+  const [allOrders, setAllOrders] = useState<SupplierOrder[]>([]);
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [loading, setLoading] = useState(true);
 
@@ -46,8 +46,10 @@ export default function Stats() {
     if (!user) return;
     setLoading(true);
     try {
-      const data = await getOrdersByGuide(user._id);
-      setAllOrders(data);
+      const all = await getSupplierOrders();
+      // Guide role: show only their orders
+      const mine = user.role === "admin" ? all : all.filter((o) => o.guideId === user._id);
+      setAllOrders(mine);
     } finally {
       setLoading(false);
     }
@@ -63,6 +65,7 @@ export default function Stats() {
 
   const totalOrders = filteredOrders.length;
   const totalRevenue = filteredOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+  const totalQuantity = filteredOrders.reduce((sum, o) => sum + o.totalQuantity, 0);
 
   const statusCounts = useMemo(() => {
     const counts: Partial<Record<OrderStatus, number>> = {};
@@ -70,19 +73,6 @@ export default function Stats() {
       counts[o.status] = (counts[o.status] || 0) + 1;
     }
     return counts;
-  }, [filteredOrders]);
-
-  const productBreakdown = useMemo(() => {
-    const map: Record<string, { name: string; qty: number }> = {};
-    for (const o of filteredOrders) {
-      for (const item of o.items) {
-        if (!map[item.productId]) {
-          map[item.productId] = { name: item.productName, qty: 0 };
-        }
-        map[item.productId].qty += item.quantity;
-      }
-    }
-    return Object.values(map).sort((a, b) => b.qty - a.qty);
   }, [filteredOrders]);
 
   if (loading) {
@@ -112,13 +102,17 @@ export default function Stats() {
       <View className="stats-grid">
         <View className="stat-card">
           <Text className="stat-value">{totalOrders}</Text>
-          <Text className="stat-label">总订单数</Text>
+          <Text className="stat-label">供货商订单</Text>
         </View>
         <View className="stat-card">
           <Text className="stat-value">
             ¥{(totalRevenue / 100).toFixed(0)}
           </Text>
-          <Text className="stat-label">总收入</Text>
+          <Text className="stat-label">总金额</Text>
+        </View>
+        <View className="stat-card">
+          <Text className="stat-value">{totalQuantity}</Text>
+          <Text className="stat-label">总套数</Text>
         </View>
       </View>
 
@@ -130,22 +124,6 @@ export default function Stats() {
             <Text className="status-count">{statusCounts[status] || 0}</Text>
           </View>
         ))}
-      </View>
-
-      <View className="section">
-        <Text className="section-title">商品销量排行</Text>
-        {productBreakdown.length === 0 ? (
-          <View className="empty">
-            <Text>暂无销售数据</Text>
-          </View>
-        ) : (
-          productBreakdown.map((p) => (
-            <View key={p.name} className="product-row">
-              <Text className="product-name">{p.name}</Text>
-              <Text className="product-qty">{p.qty}件</Text>
-            </View>
-          ))
-        )}
       </View>
     </View>
   );
